@@ -1,7 +1,8 @@
 require 'test_helper'
+
 require 'dnscat2/core/libs/hex'
 
-class Dnscat2::Core::HexTestToS < Minitest::Test
+class Dnscat2::Core::HexTestToS < Test::Unit::TestCase
   def test_empty_string()
     str = Dnscat2::Core::Hex.to_s('')
     assert_equal(str, '')
