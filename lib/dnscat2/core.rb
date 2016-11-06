@@ -2,6 +2,10 @@ require "dnscat2/core/version"
 
 module Dnscat2
   module Core
-    # Your code goes here...
+    class Test
+      def initialize()
+        puts("Hi!")
+      end
+    end
   end
 end
