@@ -34,12 +34,6 @@ module Dnscat2
         MESSAGE_TYPE_PING       = 0xFF
         MESSAGE_TYPE_ENC        = 0x03
 
-        OPT_NAME                = 0x0001
-        # OPT_TUNNEL              = 0x0002 # Deprecated
-        # OPT_DATAGRAM            = 0x0004 # Deprecated
-        # OPT_DOWNLOAD            = 0x0008 # Deprecated
-        # OPT_CHUNKED_DOWNLOAD    = 0x0010 # Deprecated
-        OPT_COMMAND             = 0x0020
 
         attr_reader :packet_id, :type, :session_id, :body
 
@@ -49,11 +43,11 @@ module Dnscat2
           attr_reader :seq, :options, :name
 
           def initialize(options, params = {})
-            @options = options || raise(DnscatException, "options can't be nil!")
-            @seq = params[:seq] || raise(DnscatException, "params[:seq] can't be nil!")
+            @options = options || raise(ArgumentError, "options can't be nil!")
+            @seq = params[:seq] || raise(ArgumentError, "params[:seq] can't be nil!")
 
             if((@options & OPT_NAME) == OPT_NAME)
-              @name = params[:name] || raise(DnscatException, "params[:name] can't be nil when OPT_NAME is set!")
+              @name = params[:name] || raise(ArgumentError, "params[:name] can't be nil when OPT_NAME is set!")
             else
               @name = "(unnamed)"
             end
@@ -108,9 +102,9 @@ module Dnscat2
 
           def initialize(options, params = {})
             @options = options
-            @seq = params[:seq] || raise(DnscatException, "params[:seq] can't be nil!")
-            @ack = params[:ack] || raise(DnscatException, "params[:ack] can't be nil!")
-            @data = params[:data] || raise(DnscatException, "params[:data] can't be nil!")
+            @seq = params[:seq] || raise(ArgumentError, "params[:seq] can't be nil!")
+            @ack = params[:ack] || raise(ArgumentError, "params[:ack] can't be nil!")
+            @data = params[:data] || raise(ArgumentError, "params[:data] can't be nil!")
           end
 
           def MsgBody.parse(options, data)
@@ -155,7 +149,7 @@ module Dnscat2
 
           def initialize(options, params = {})
             @options = options
-            @reason = params[:reason] || raise(DnscatException, "params[:reason] can't be nil!")
+            @reason = params[:reason] || raise(ArgumentError, "params[:reason] can't be nil!")
           end
 
           def FinBody.parse(options, data)
@@ -189,7 +183,7 @@ module Dnscat2
 
           def initialize(options, params = {})
             @options = options
-            @data = params[:data] || raise(DnscatException, "params[:data] can't be nil!")
+            @data = params[:data] || raise(ArgumentError, "params[:data] can't be nil!")
           end
 
           def PingBody.parse(options, data)
@@ -221,24 +215,24 @@ module Dnscat2
           attr_reader :authenticator # SUBTYPE_AUTH
 
           def initialize(params = {})
-            @subtype = params[:subtype] || raise(DnscatException, "params[:subtype] is required!")
-            @flags   = params[:flags]   || raise(DnscatException, "params[:flags] is required!")
+            @subtype = params[:subtype] || raise(ArgumentError, "params[:subtype] is required!")
+            @flags   = params[:flags]   || raise(ArgumentError, "params[:flags] is required!")
 
             if(@subtype == SUBTYPE_INIT)
-              @public_key_x = params[:public_key_x] || raise(DnscatException, "params[:public_key_x] is required!")
-              @public_key_y = params[:public_key_y] || raise(DnscatException, "params[:public_key_y] is required!")
+              @public_key_x = params[:public_key_x] || raise(ArgumentError, "params[:public_key_x] is required!")
+              @public_key_y = params[:public_key_y] || raise(ArgumentError, "params[:public_key_y] is required!")
 
               if(!@public_key_x.is_a?(Bignum) || !@public_key_y.is_a?(Bignum))
-                raise(DnscatException, "Public keys have to be Bignums! (Seen: #{@public_key_x.class} #{@public_key_y.class})")
+                raise(ArgumentError, "Public keys have to be Bignums! (Seen: #{@public_key_x.class} #{@public_key_y.class})")
               end
             elsif(@subtype == SUBTYPE_AUTH)
-              @authenticator = params[:authenticator] || raise(DnscatException, "params[:authenticator] is required!")
+              @authenticator = params[:authenticator] || raise(ArgumentError, "params[:authenticator] is required!")
 
               if(@authenticator.length != 32)
-                raise(DnscatException, "params[:authenticator] was the wrong size!")
+                raise(ArgumentError, "params[:authenticator] was the wrong size!")
               end
             else
-              raise(DnscatException, "Unknown subtype: #{@subtype}")
+              raise(ArgumentError, "Unknown subtype: #{@subtype}")
             end
           end
 
@@ -308,8 +302,8 @@ module Dnscat2
         # You probably don't ever want to use this, call Packet.parse() or Packet.create_*() instead
         def initialize(packet_id, type, session_id, body)
           @packet_id  = packet_id  || rand(0xFFFF)
-          @type       = type       || raise(DnscatException, "type can't be nil!")
-          @session_id = session_id || raise(DnscatException, "session_id can't be nil!")
+          @type       = type       || raise(ArgumentError, "type can't be nil!")
+          @session_id = session_id || raise(ArgumentError, "session_id can't be nil!")
           @body       = body
         end
 
@@ -389,7 +383,7 @@ module Dnscat2
 
         def to_s()
           result = "[0x%04x] session = %04x :: %s\n" % [@packet_id, @session_id, @body.to_s]
-          result += Hex.to_s(to_bytes(), 2)
+          result += Hex.to_s(to_bytes(), indent: 2)
           return result
         end
 
@@ -402,6 +396,85 @@ module Dnscat2
           end
 
           return result
+        end
+
+        # ==================================
+        # TODO -----------------------------
+        # ==================================
+      end
+
+      class SynPacketNg
+        attr_reader :packet_id, :session_id, :isn, :name
+
+        OPT_NAME                = 0x0001
+        # OPT_TUNNEL              = 0x0002 # Deprecated
+        # OPT_DATAGRAM            = 0x0004 # Deprecated
+        # OPT_DOWNLOAD            = 0x0008 # Deprecated
+        # OPT_CHUNKED_DOWNLOAD    = 0x0010 # Deprecated
+        # OPT_COMMAND             = 0x0020 # Deprecated
+        def initialize(session_id, isn, optional_arguments=nil)
+          optional_arguments = optional_arguments || {}
+          @packet_id = optional_arguments[:packet_id] || rand(0xFFFF)
+          @session_id = session_id
+
+          @isn = isn
+          @name = optional_arguments[:name]
+        end
+
+        def to_bytes()
+          # Header
+          result = [@packet_id, Dnscat2::Core::Libs::Packet::MESSAGE_TYPE_SYN, @session_id].pack("nCn")
+
+          # Initial sequence number
+          result += [@isn].pack('n')
+
+          # Options
+          if(@name.nil?)
+            result += [0].pack('n')
+          else
+            result += [OPT_NAME, @name].pack('nZ*')
+          end
+
+          return result
+        end
+
+        def self.parse(data)
+          # Header
+          # (uint16_t) packet_id
+          # (uint8_t)  message_type
+          # (uint16_t) session_id
+          (data.length >= 5) || raise(DnscatException, "Packet is too short (SYN header)")
+          packet_id, type, session_id, data = data.unpack("nCna*")
+
+          # If the type is wrong, we shouldn't have been here in the first place
+          if(type != Dnscat2::Core::Libs::Packet::MESSAGE_TYPE_SYN)
+            raise(ArgumentError, "Packet is the wrong type! (This is probably a programming error)")
+          end
+
+          # Body
+          # (uint16_t) initial sequence number
+          # (uint16_t) options
+          (data.length >= 4) || raise(DnscatException, "Packet is too short (SYN body)")
+          isn, options, data = data.unpack('nna*')
+
+          # If OPT_NAME is set:
+          #   (ntstring) session_name
+          if((options & OPT_NAME) == OPT_NAME)
+            if(data !~ /\x00/)
+              raise(DnscatException, "Packet didn't contain a properly-terminated name!")
+            end
+            name, data = data.unpack("Z*a*")
+          end
+
+          # Make sure there's no hanging data
+          if(data.length > 0)
+            raise(DnscatException, "Packet has extra data on the end (SYN)")
+          end
+
+          return SynPacketNg.new(session_id, isn, {
+            :packet_id => packet_id,
+            :name => name,
+          })
         end
       end
     end
