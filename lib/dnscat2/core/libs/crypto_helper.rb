@@ -10,27 +10,25 @@
 
 module Dnscat2
   module Core
-    module Libs
-      class CryptoHelper
-        def CryptoHelper.bignum_to_binary(bn, size: 32)
-          if(!bn.is_a?(Bignum) and !bn.is_a?(Fixnum))
-            raise(ArgumentError, "Expected: Bignum; received: #{bn.class}")
-          end
-
-          return [bn.to_s(16).rjust(size*2, "\0")].pack("H*")
+    class CryptoHelper
+      def self.bignum_to_binary(bn, size: 32)
+        if(!bn.is_a?(Bignum) and !bn.is_a?(Fixnum))
+          raise(ArgumentError, "Expected: Bignum; received: #{bn.class}")
         end
 
-        def CryptoHelper.bignum_to_text(bn, size: 32)
-          return CryptoHelper.bignum_to_binary(bn, size: size).unpack("H*").pop()
+        return [bn.to_s(16).rjust(size*2, "\0")].pack("H*")
+      end
+
+      def self.bignum_to_text(bn, size: 32)
+        return CryptoHelper.bignum_to_binary(bn, size: size).unpack("H*").pop()
+      end
+
+      def self.binary_to_bignum(binary)
+        if(!binary.is_a?(String))
+          raise(ArgumentError, "Expected: String; received: #{binary.class}")
         end
 
-        def CryptoHelper.binary_to_bignum(binary)
-          if(!binary.is_a?(String))
-            raise(ArgumentError, "Expected: String; received: #{binary.class}")
-          end
-
-          return binary.unpack("H*").pop().to_i(16)
-        end
+        return binary.unpack("H*").pop().to_i(16)
       end
     end
   end
