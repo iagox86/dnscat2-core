@@ -1,38 +1,45 @@
 ##
-# syn_packet.rb
+# ping_packet.rb
 # Created June, 2017
 # By Ron Bowes
 #
 # See: LICENSE.md
 ##
 
+require 'dnscat2/core/packets/packet_constants'
+require 'dnscat2/core/packets/packet_helper'
+
 module Dnscat2
   module Core
     module Packets
       class PingPacket
-        attr_reader :data
+        # This gives us the verify_* functions
+        extend PacketHelper
 
-        def initialize(options, params = {})
+        attr_reader :options, :body
+
+        def initialize(options:, body:)
           @options = options
-          @data = params[:data] || raise(ArgumentError, "params[:data] can't be nil!")
+          @body = body
         end
 
-        def PingBody.parse(options, data)
-          at_least?(data, 3) || raise(DnscatException, "Packet is too short (PING)")
+        def self.parse(options, data)
+          has_null_terminator?(data)
+          body, data = data.unpack("Z*a*")
+          exactly?(data, 0)
 
-          data = data.unpack("Z*").pop
-
-          return PingBody.new(options, {
-            :data => data,
-          })
-        end
-
-        def to_s()
-          return "[[PING]] :: %s" % [@data]
+          return self.new(
+            options: options,
+            body: body,
+          )
         end
 
         def to_bytes()
-          [@data].pack("Z*")
+          [@body].pack("Z*")
+        end
+
+        def to_s()
+          return "[[PING]] :: body = %s" % [@body]
         end
       end
     end
