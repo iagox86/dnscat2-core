@@ -23,23 +23,6 @@ module Dnscat2
           @name = name
         end
 
-        def to_bytes()
-          result = ''
-
-          # Initial sequence number
-          result += [@isn].pack('n')
-
-          # Options
-          if(@name.nil?)
-            result += [0].pack('n')
-          else
-            result += [OPT_NAME].pack('n')
-            result += [@name].pack('Z*')
-          end
-
-          return result
-        end
-
         def self.parse(data)
           # Body
           # (uint16_t) initial sequence number
@@ -61,6 +44,23 @@ module Dnscat2
             isn: isn,
             name: name,
           )
+        end
+
+        def to_bytes()
+          result = ''
+
+          # Initial sequence number
+          result += [@isn].pack('n')
+
+          # Options
+          if(@name.nil?)
+            result += [0].pack('n')
+          else
+            result += [OPT_NAME].pack('n')
+            result += [@name].pack('Z*')
+          end
+
+          return result
         end
 
         def to_s()
