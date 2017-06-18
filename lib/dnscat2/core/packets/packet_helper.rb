@@ -29,12 +29,6 @@ module Dnscat2
           end
         end
 
-        def not_nil?(value, msg)
-          if value.nil?
-            raise(DnscatException, msg)
-          end
-        end
-
         def has_null_terminator?(data)
           if data.index("\x00").nil?
             raise(DnscatException, "Missing null terminator!")

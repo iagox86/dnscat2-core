@@ -102,6 +102,12 @@ module Dnscat2
           assert_equal(subpacket, packet.body)
         end
 
+        def test_create_bad()
+          assert_raises(DnscatException) do
+            EncPacket.new(flags: 0, body: 'hi')
+          end
+        end
+
         def test_parse_init()
           packet = EncPacket.parse("\x00\x00\x00\x00" +
             ("\x00" * 31 + "\x01") +
@@ -118,6 +124,30 @@ module Dnscat2
           assert_equal(0, packet.flags)
           assert_equal(SUBTYPE_AUTH, packet.subtype)
           assert_equal(3, packet.body.authenticator)
+        end
+
+        def test_parse()
+          assert_raises(DnscatException) do
+            EncPacket.parse("\x00\x02\x00\x00\x00")
+          end
+        end
+
+        def test_parse_too_short()
+          assert_raises(DnscatException) do
+            EncPacket.parse("\x00\x00\x00\x00")
+          end
+          assert_raises(DnscatException) do
+            EncPacket.parse("\x00\x00\x00")
+          end
+          assert_raises(DnscatException) do
+            EncPacket.parse("\x00\x00")
+          end
+          assert_raises(DnscatException) do
+            EncPacket.parse("\x00")
+          end
+          assert_raises(DnscatException) do
+            EncPacket.parse("")
+          end
         end
 
         def test_to_bytes_init()
