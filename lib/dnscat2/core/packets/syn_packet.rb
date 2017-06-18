@@ -6,22 +6,18 @@
 # See: LICENSE.md
 ##
 
+require 'dnscat2/core/packets/packet_constants'
 require 'dnscat2/core/packets/packet_helper'
 
 module Dnscat2
   module Core
     module Packets
       class SynPacket
+        # This gives us the verify_* functions
         extend PacketHelper
 
         attr_reader :isn, :name
 
-        OPT_NAME                = 0x0001
-        # OPT_TUNNEL              = 0x0002 # Deprecated
-        # OPT_DATAGRAM            = 0x0004 # Deprecated
-        # OPT_DOWNLOAD            = 0x0008 # Deprecated
-        # OPT_CHUNKED_DOWNLOAD    = 0x0010 # Deprecated
-        # OPT_COMMAND             = 0x0020 # Deprecated
         def initialize(isn:, name:nil)
           @isn = isn
           @name = name

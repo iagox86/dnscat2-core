@@ -56,7 +56,7 @@ module Dnscat2
         end
 
         def test_parse_too_long()
-          0.upto(16) do |i|
+          1.upto(16) do |i|
             assert_raises(DnscatException) do
               SynPacket.parse("\x11\x22\x00\x00" + ("\x00" * i))
             end
@@ -64,7 +64,7 @@ module Dnscat2
         end
 
         def test_parse_too_long_with_name()
-          0.upto(16) do |i|
+          1.upto(16) do |i|
             assert_raises(DnscatException) do
               SynPacket.parse("\x11\x22\x00\x01testname\x00" + ("\x00" * i))
             end

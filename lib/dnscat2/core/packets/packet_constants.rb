@@ -10,7 +10,7 @@
 
 module Dnscat2
   module Core
-    module Packet
+    module Packets
       # Message types
       MESSAGE_TYPE_SYN        = 0x00
       MESSAGE_TYPE_MSG        = 0x01
@@ -21,6 +21,14 @@ module Dnscat2
       # Sub-messages for MESSAGE_TYPE_ENC
       SUBTYPE_INIT = 0x0000
       SUBTYPE_AUTH = 0x0001
+
+      # Options for SYN packets
+      OPT_NAME                = 0x0001
+      # OPT_TUNNEL              = 0x0002 # Deprecated
+      # OPT_DATAGRAM            = 0x0004 # Deprecated
+      # OPT_DOWNLOAD            = 0x0008 # Deprecated
+      # OPT_CHUNKED_DOWNLOAD    = 0x0010 # Deprecated
+      # OPT_COMMAND             = 0x0020 # Deprecated
     end
   end
 end
