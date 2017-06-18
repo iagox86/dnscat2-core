@@ -75,14 +75,17 @@ module Dnscat2
       class EncPacket
         # This gives us the verify_* functions
         extend PacketHelper
-        attr_reader :subtype, :flags
+        attr_reader :subtype, :flags, :body
 
-        def initialize(subtype:, flags:, body:)
-          if ![SUBTYPE_INIT, SUBTYPE_AUTH].include?(subtype)
+        def initialize(flags:, body:)
+          if body.is_a?(EncPacketInit)
+            @subtype = SUBTYPE_INIT
+          elsif body.is_a?(EncPacketAuth)
+            @subtype = SUBTYPE_AUTH
+          else
             raise(DnscatException, "Illegal subtype on ENC packet")
           end
 
-          @subtype = subtype
           @flags   = flags
           @body    = body
         end
@@ -92,10 +95,11 @@ module Dnscat2
 
           subtype, flags, data = data.unpack("nna*")
 
-          if(subtype == SUBTYPE_INIT)
+          case subtype
+          when SUBTYPE_INIT
             exactly?(data, 64)
             body = EncPacketInit.parse(data)
-          elsif(subtype == SUBTYPE_AUTH)
+          when SUBTYPE_AUTH
             exactly?(data, 32)
             body = EncPacketAuth.parse(data)
           else
@@ -103,18 +107,17 @@ module Dnscat2
           end
 
           return self.new(
-            subtype: subtype,
             flags: flags,
             body: body,
           )
         end
 
-        def to_s()
-          return "[[ENC]] :: flags = 0x%04x %s" % [@flags, @body.to_s]
-        end
-
         def to_bytes()
           return [@subtype, @flags, @body.to_bytes].pack("nna*")
+        end
+
+        def to_s()
+          return "[[ENC]] :: flags = 0x%04x %s" % [@flags, @body.to_s]
         end
       end
     end
