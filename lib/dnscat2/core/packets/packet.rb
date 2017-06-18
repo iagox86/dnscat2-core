@@ -13,7 +13,7 @@ require 'dnscat2/core/libs/hex'
 
 module Dnscat2
   module Core
-    module Packet
+    module Packets
       include PacketHelper
 
       class Packet

@@ -6,43 +6,44 @@
 # See: LICENSE.md
 ##
 
+require 'dnscat2/core/packets/packet_constants'
+require 'dnscat2/core/packets/packet_helper'
+
 module Dnscat2
   module Core
-    module Packet
+    module Packets
       class MsgPacket
-        attr_reader :seq, :ack, :data
+        # This gives us the verify_* functions
+        extend PacketHelper
+
+        attr_reader :options, :seq, :ack, :data
 
         def initialize(options:, seq:, ack:, data:)
           @options = options
-          @seq = params[:seq] || raise(ArgumentError, "params[:seq] can't be nil!")
-          @ack = params[:ack] || raise(ArgumentError, "params[:ack] can't be nil!")
-          @data = params[:data] || raise(ArgumentError, "params[:data] can't be nil!")
+          @seq = seq
+          @ack = ack
+          @data = data
         end
 
         def self.parse(options, data)
-          at_least?(data, 4) || raise(DnscatException, "Packet is too short (MSG norm)")
+          at_least?(data, 4)
 
-          seq, ack = data.unpack("nn")
-          data = data[4..-1] # Remove the first four bytes
+          seq, ack, data = data.unpack("nna*")
 
-          return self.new(options, {
-            :seq   => seq,
-            :ack   => ack,
-            :data  => data,
-          })
-        end
-
-        def to_s()
-          return "[[MSG]] :: seq = %04x, ack = %04x, data = 0x%x bytes" % [@seq, @ack, data.length]
+          return self.new(
+            options: options,
+            seq: seq,
+            ack: ack,
+            data: data,
+          )
         end
 
         def to_bytes()
-          result = ""
-          seq = @seq || 0
-          ack = @ack || 0
-          result += [seq, ack, @data].pack("nna*")
+          return [@seq, @ack, @data].pack("nna*")
+        end
 
-          return result
+        def to_s()
+          return "[[MSG]] :: seq = 0x%04x, ack = 0x%04x, data = (0x%x bytes)" % [@seq, @ack, @data.length]
         end
       end
     end

@@ -29,7 +29,7 @@ module Dnscat2
           end
         end
 
-        def not_null?(value, msg)
+        def not_nil?(value, msg)
           if value.nil?
             raise(DnscatException, msg)
           end

@@ -8,7 +8,7 @@
 
 module Dnscat2
   module Core
-    module Packet
+    module Packets
       class EncPacket
         attr_reader :subtype, :flags
         attr_reader :public_key_x, :public_key_y # SUBTYPE_INIT

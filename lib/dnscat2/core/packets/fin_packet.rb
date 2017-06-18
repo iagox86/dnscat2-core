@@ -8,7 +8,7 @@
 
 module Dnscat2
   module Core
-    module Packet
+    module Packets
       class FinPacket
         attr_reader :reason
 

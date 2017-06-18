@@ -8,18 +8,12 @@ module Dnscat2
       class SynPacketTest < ::Test::Unit::TestCase
         def test_create_no_name()
           packet = SynPacket.new(isn: 0x1122, name: nil)
-          assert_equal(
-            "\x11\x22\x00\x00",
-            packet.to_bytes()
-          )
+          assert_equal("\x11\x22\x00\x00", packet.to_bytes())
         end
 
         def test_create_with_name()
           packet = SynPacket.new(isn: 0x1122, name: "testname")
-          assert_equal(
-            "\x11\x22\x00\x01testname\x00",
-            packet.to_bytes()
-          )
+          assert_equal("\x11\x22\x00\x01testname\x00", packet.to_bytes())
         end
 
         def test_parse_no_name()
