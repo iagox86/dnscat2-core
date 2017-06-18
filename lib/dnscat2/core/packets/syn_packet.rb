@@ -57,10 +57,14 @@ module Dnscat2
           # Make sure there's no hanging data
           exactly?(data, 0)
 
-          return SynPacket.new(
+          return self.new(
             isn: isn,
             name: name,
           )
+        end
+
+        def to_s()
+          return "[[SYN]] :: isn = 0x%04x, name = %s" % [@isn, @name || '(n/a)']
         end
       end
     end

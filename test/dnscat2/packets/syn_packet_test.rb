@@ -70,6 +70,22 @@ module Dnscat2
             end
           end
         end
+
+        def test_to_s_with_name()
+          packet = SynPacket.new(isn: 0x1122, name: "testname")
+          assert_equal(
+            "[[SYN]] :: isn = 0x1122, name = testname",
+            packet.to_s()
+          )
+        end
+
+        def test_to_s_without_name()
+          packet = SynPacket.new(isn: 0x1122)
+          assert_equal(
+            "[[SYN]] :: isn = 0x1122, name = (n/a)",
+            packet.to_s()
+          )
+        end
       end
     end
   end
