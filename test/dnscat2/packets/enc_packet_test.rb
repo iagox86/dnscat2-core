@@ -46,6 +46,42 @@ module Dnscat2
                        packet.to_s)
         end
       end
+
+      class EncPacketAuthTest < ::Test::Unit::TestCase
+        def test_create()
+          packet = EncPacketAuth.new(authenticator: 1)
+          assert_equal(1, packet.authenticator)
+        end
+
+        def test_parse()
+          packet = EncPacketAuth.parse(("\x00" * 31) + "\x01")
+          assert_equal(1, packet.authenticator)
+        end
+
+        def test_parse_too_short()
+          assert_raises(DnscatException) do
+            EncPacketAuth.parse("\x00" * 63)
+          end
+        end
+
+        def test_parse_too_long()
+          assert_raises(DnscatException) do
+            EncPacketAuth.parse("\x00" * 65)
+          end
+        end
+
+        def test_to_bytes()
+          packet = EncPacketAuth.new(authenticator: 1)
+          assert_equal(("\x00" * 31 + "\x01"), packet.to_bytes())
+        end
+
+        def test_to_s()
+          packet = EncPacketAuth.new(authenticator: 0x10)
+          assert_equal("[[AUTH]] :: authenticator = " +
+                       "0x0000000000000000000000000000000000000000000000000000000000000010",
+                       packet.to_s)
+        end
+      end
     end
   end
 end

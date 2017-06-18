@@ -49,32 +49,32 @@ module Dnscat2
         attr_reader :authenticator
 
         def initialize(authenticator:)
-          exactly?(authenticator, 32)
           @authenticator = authenticator
         end
 
         def self.parse(data)
-          authenticator, data = data.unpack("a32a*")
-          exactly?(data, 0)
+          exactly?(data, 32)
+          authenticator = data.unpack("a32").pop
 
           return self.new(
-            authenticator: authenticator,
+            authenticator: CryptoHelper.binary_to_bignum(authenticator),
           )
         end
 
         def to_bytes()
-          return [@authenticator].pack("a32")
+          authenticator = CryptoHelper.bignum_to_binary(@authenticator)
+
+          return [authenticator].pack("a32")
         end
 
         def to_s()
-          return "[[AUTH]] :: authenticator = %s" % [@authenticator.unpack("H*").pop()]
+          return "[[AUTH]] :: authenticator = 0x%s" % [CryptoHelper.bignum_to_text(@authenticator)]
         end
       end
 
       class EncPacket
         # This gives us the verify_* functions
         extend PacketHelper
-
         attr_reader :subtype, :flags
 
         def initialize(subtype:, flags:, body:)
