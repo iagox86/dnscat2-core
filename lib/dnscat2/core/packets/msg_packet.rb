@@ -1,3 +1,4 @@
+# Encoding: ASCII-8BIT
 ##
 # msg_packet.rb
 # Created June, 2017

@@ -1,3 +1,4 @@
+# Encoding: ASCII-8BIT
 ##
 # ping_packet.rb
 # Created June, 2017

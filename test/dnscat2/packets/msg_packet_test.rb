@@ -1,5 +1,5 @@
+# Encoding: ASCII-8BIT
 require 'test_helper'
-
 require 'dnscat2/core/packets/msg_packet'
 
 module Dnscat2

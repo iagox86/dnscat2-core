@@ -1,3 +1,4 @@
+# Encoding: ASCII-8BIT
 ##
 # packet_helper.rb
 # Created June, 2017
@@ -32,6 +33,12 @@ module Dnscat2
         def has_null_terminator?(data)
           if data.index("\x00").nil?
             raise(DnscatException, "Missing null terminator!")
+          end
+        end
+
+        def not_null?(data, msg)
+          if data.nil?
+            raise(DnscatException, msg)
           end
         end
       end

@@ -1,5 +1,5 @@
+# Encoding: ASCII-8BIT
 require 'test_helper'
-
 require 'dnscat2/core/packets/enc_packet'
 
 module Dnscat2

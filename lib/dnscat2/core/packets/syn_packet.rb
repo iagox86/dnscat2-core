@@ -1,3 +1,4 @@
+# Encoding: ASCII-8BIT
 ##
 # syn_packet.rb
 # Created June, 2017

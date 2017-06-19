@@ -1,3 +1,4 @@
+# Encoding: ASCII-8BIT
 ##
 # fin_packet.rb
 # Created June, 2017

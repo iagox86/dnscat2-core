@@ -1,3 +1,4 @@
+# Encoding: ASCII-8BIT
 ##
 # packet_constants.rb
 # Created June, 2017
