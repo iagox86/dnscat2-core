@@ -116,21 +116,22 @@ module DNSer
 
       return segments.join('.')
     end
-
-    # Shows where in the string we're currently editing. Mostly usefulu for
-    # debugging.
-    def to_s()
-      if(@offset == 0)
-        return @data.unpack("H*").pop
-      else
-        return "#{@data[0..@offset-1].unpack("H*")}|#{@data[@offset..-1].unpack("H*")}"
-      end
-    end
   end
 
   class Packer
+    public
+    def initialize()
+      @data = ''
+      @segment_cache = {}
+    end
+
+    public
+    def pack(format, data)
+      @data += data.pack(format)
+    end
+
     private
-    def self.validate!(name)
+    def validate!(name)
       if name.chars.detect { |ch| !LEGAL_CHARACTERS.include?(ch) }
         raise(FormatException, "DNS name contains illegal characters")
       end
@@ -145,24 +146,40 @@ module DNSer
     end
 
     # Take a name, as a dotted string ("google.com") and return it as length-
-    # prefixed segments ("\x06google\x03com\x00").
-    #
-    # TODO: Compress the name properly, if we can ("\xc0\x0c")
+    # prefixed segments ("\x06google\x03com\x00"). It also does a pointer
+    # (\xc0\xXX) when possible!
     public
-    def self.pack_name(name)
+    def pack_name(name)
       validate!(name)
 
-      result = ''
-      name.split(/\./).each do |segment|
-        if segment.length() == 0
-          raise(FormatException, "Zero-length segments aren't allowed!")
+      # `name` becomes nil at the end, unless there's a comma on the end, in
+      # which case it's a 0-length string
+      while name and name.length() > 0
+        if @segment_cache[name]
+          # User a pointer if we've already done this
+          @data += [0xc000 | @segment_cache[name]].pack("n")
+
+          # If we use break here, we get a bad NUL terminator
+          return
         end
-        result += [segment.length(), segment].pack("Ca*")
+
+        # Log where we put this segment
+        @segment_cache[name] = @data.length
+
+        # Get the next label
+        segment, name = name.split(/\./, 2)
+
+        # Encode it into the string
+        @data += [segment.length(), segment].pack("Ca*")
       end
 
-      result += "\0"
-      return result
+      # Always be null terminating
+      @data += "\0"
     end
 
+    public
+    def get()
+      return @data
+    end
   end
 end
