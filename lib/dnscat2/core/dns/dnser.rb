@@ -1,3 +1,4 @@
+# Encoding: ASCII-8BIT
 ##
 # dnser.rb
 # Created Oct 7, 2015
@@ -45,13 +46,7 @@ require 'timeout'
 require_relative './vash'
 
 module DNSer
-  # Create a custom error message
-  class DnsException < StandardError
-  end
-
-
   class DNSer
-
     # Send out a query, asynchronously. This immediately returns, then, when the
     # query is finished, the callback block is called with a DNSer::Packet that
     # represents the response (or nil, if there was a timeout).

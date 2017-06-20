@@ -1,5 +1,6 @@
+# Encoding: ASCII-8BIT
 ##
-# dnser.rb
+# transaction.rb
 # Created June 20, 2017
 # By Ron Bowes
 #
