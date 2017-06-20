@@ -11,6 +11,16 @@ module DNSer
   # Max recursion depth for parsing names
   MAX_RECURSION_DEPTH = 16
 
+  # These restrictions are from RFC 952
+  LEGAL_CHARACTERS = (
+    ('a'..'z').to_a +
+    ('A'..'Z').to_a +
+    (0..9).to_a +
+    ['-', '.']
+  )
+  MAX_SEGMENT_LENGTH = 63
+  MAX_TOTAL_LENGTH = 253
+
   CLS_IN                = 0x0001 # Internet
   CLSES = {
     CLS_IN => "IN",

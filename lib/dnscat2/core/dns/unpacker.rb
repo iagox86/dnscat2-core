@@ -129,13 +129,30 @@ module DNSer
   end
 
   class Packer
+    private
+    def self.validate!(name)
+      if name.chars.detect { |ch| !LEGAL_CHARACTERS.include?(ch) }
+        raise(FormatException, "DNS name contains illegal characters")
+      end
+      if name.length > 253
+        raise(FormatException, "DNS name can't be longer than 253 characters")
+      end
+      name.split(/\./).each do |segment|
+        if segment.length == 0 || segment.length > 63
+          raise(FormatException, "DNS segments must be between 1 and 63 characters!")
+        end
+      end
+    end
+
     # Take a name, as a dotted string ("google.com") and return it as length-
     # prefixed segments ("\x06google\x03com\x00").
     #
     # TODO: Compress the name properly, if we can ("\xc0\x0c")
+    public
     def self.pack_name(name)
-      result = ''
+      validate!(name)
 
+      result = ''
       name.split(/\./).each do |segment|
         if segment.length() == 0
           raise(FormatException, "Zero-length segments aren't allowed!")

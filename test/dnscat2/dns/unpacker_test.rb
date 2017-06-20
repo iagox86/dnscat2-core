@@ -198,5 +198,35 @@ module DNSer
         Packer.pack_name('test..com')
       end
     end
+
+    def test_with_illegal_character()
+      assert_raises(FormatException) do
+        Packer.pack_name('te\x00st.com')
+      end
+    end
+
+    def test_segment_too_long()
+      name = ('A' * 63) + '.com'
+      Packer.pack_name(name)
+      assert_raises(FormatException) do
+        Packer.pack_name('A' + name)
+      end
+    end
+
+    def test_packet_too_long()
+      # This makes it 256
+      name = (('A' * 31) + '.') * 8
+
+      # This makes it 253, the exact maximum
+      name = name[3..-1]
+
+      # Verify it works with 253...
+      Packer.pack_name(name)
+
+      # ...but fails with 254
+      assert_raises(FormatException) do
+        Packer.pack_name('A' + name)
+      end
+    end
   end
 end
