@@ -112,6 +112,14 @@ module DNSer
       assert_equal('name', name)
     end
 
+    def test_unpack_one_bad_format_string()
+      unpacker = Unpacker.new("AAAAAAAA")
+
+      assert_raises(FormatException) do
+        unpacker.unpack_one("AA")
+      end
+    end
+
     def test_unpack_name_truncated()
       # No pointers
       assert_raises(FormatException) do

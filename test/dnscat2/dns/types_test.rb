@@ -22,6 +22,12 @@ module DNSer
       assert_equal("\x01\x02\x03\x04", packer.get())
     end
 
+    def test_parse_a()
+      data = Unpacker.new("ABCD")
+      record = A.parse(data)
+      assert_equal(IPAddr.new('65.66.67.68'), record.address)
+    end
+
     def test_invalid_a()
       assert_raises(FormatException) do
         A.new(address: 123)

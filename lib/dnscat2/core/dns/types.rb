@@ -35,8 +35,8 @@ module DNSer
     end
 
     def self.parse(packed_data)
-      data = packed_data.unpack('AAAA')
-      return A.new(data)
+      data = packed_data.unpack('AAAA').join()
+      return A.new(address: IPAddr.ntop(data))
     end
 
     def to_bytes()
