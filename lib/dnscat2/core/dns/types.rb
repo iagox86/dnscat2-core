@@ -39,39 +39,35 @@ module DNSer
       return A.new(address: IPAddr.ntop(data))
     end
 
-    def to_bytes()
-      return @address.hton()
-    end
-
     def pack(packer)
-      packer.pack('CCCC', to_bytes().bytes())
+      packer.pack('CCCC', @address.hton().bytes())
     end
 
     def to_s()
       return "#{@address} [A]"
     end
   end
-#
-#  class NS
-#    attr_accessor :name
-#
-#    def initialize(name)
-#      @name = name
-#    end
-#
-#    def self.parse(data)
-#      return NS.new(data.unpack_name())
-#    end
-#
-#    def to_bytes()
-#      return DNSer::Packet::DnsUnpacker.pack_name(@name)
-#    end
-#
-#    def to_s()
-#      return "#{@name} [NS]"
-#    end
-#  end
-#
+
+  class NS
+    attr_accessor :name
+
+    def initialize(name:)
+      @name = name
+    end
+
+    def self.parse(data)
+      return NS.new(name: data.unpack_name())
+    end
+
+    def pack(packer)
+      packer.pack_name(@name)
+    end
+
+    def to_s()
+      return "#{@name} [NS]"
+    end
+  end
+
 #  class CNAME
 #    attr_accessor :name
 #
