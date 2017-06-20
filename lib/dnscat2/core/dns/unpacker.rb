@@ -12,43 +12,62 @@
 # simpler unpacking, is that encoded names (with pointers to other parts
 # of the packet) can be trivially handled.
 ##
-module DNSer
-  class DnsUnpacker
-    attr_accessor :data
 
-    # Create a new instance, initialized with the given data
+require 'dnscat2/core/dns/dns_exception'
+require 'dnscat2/core/dns/constants'
+
+module DNSer
+  class Unpacker
+    attr_accessor :data, :offset
+
+    public
     def initialize(data)
-      @data = data.force_encoding("ASCII-8BIT")
+      @data = data
       @offset = 0
     end
 
-#      def remaining()
-#        return @data[@offset..-1]
-#      end
+    private
+    def _verify_results(results)
+      # If there's at least one nil included in our results, bad stuff happened
+      if results.index(nil)
+        raise(FormatException, "DNS packet was truncated (or we messed up parsing it)!")
+      end
+    end
 
     # Unpack from the string, exactly like the normal `String#Unpack` method
     # in Ruby, except that an offset into the string is maintained and updated.
-    def unpack(format, offset = nil)
-      # If there's an offset, unpack starting there
-      if(!offset.nil?)
-        results = @data[offset..-1].unpack(format)
-      else
-        results = @data[@offset..-1].unpack(format + "a*")
-        remaining = results.pop
-        @offset = @data.length - remaining.length
+    public
+    def unpack(format)
+      if @offset >= @data.length
+        raise(FormatException, "DNS packet was invalid!")
       end
 
-      if(!results.index(nil).nil?)
-        raise(DNSer::Packet::FormatException, "DNS packet was truncated (or we messed up parsing it)!")
-      end
+      results = @data[@offset..-1].unpack(format + "a*")
+      remaining = results.pop
+      @offset = @data.length - remaining.length
+
+      _verify_results(results)
 
       return *results
+    end
+
+    public
+    def unpack_one(format)
+      results = unpack(format)
+
+      _verify_results(results)
+      if results.length != 1
+        raise(FormatException, "unpack_one() was passed a bad format string")
+      end
+
+      return results.pop()
     end
 
     # This temporarily changes the offset that we're reading from, runs the
     # given block, then changes it back. This is used internally while
     # unpacking names.
-    def _move_offset(offset)
+    private
+    def _with_offset(offset)
       old_offset = @offset
       @offset = offset
       yield
@@ -60,30 +79,32 @@ module DNSer
     # * A series of length-prefixed blocks, each indicating a segment
     # * Blocks with a length the starts with two '1' bits (11xxxxx...), which
     #   contains a pointer to another name elsewhere in the packet
-    def unpack_name(depth = 0)
+    public
+    def unpack_name(depth:0)
       segments = []
 
-      if(depth > 16)
-        raise(DNSer::Packet::FormatException, "It looks like this packet contains recursive pointers!")
+      if depth > MAX_RECURSION_DEPTH
+        raise(FormatException, "It looks like this packet contains recursive pointers!")
       end
 
       loop do
         # If no offset is given, just eat data from the normal source
-        len = unpack("C").pop()
+        len = unpack_one("C")
 
         # Stop at the null terminator
-        if(len == 0)
+        if len == 0
           break
         end
+
         # Handle "pointer" records by updating the offset
-        if((len & 0xc0) == 0xc0)
+        if (len & 0xc0) == 0xc0
           # If the first two bits are 1 (ie, 0xC0), the next
           # 10 bits are an offset, so we have to mask out the first two bits
           # with 0x3F (00111111)
-          offset = ((len << 8) | unpack("C").pop()) & 0x3FFF
+          offset = ((len << 8) | unpack_one("C")) & 0x3FFF
 
-          _move_offset(offset) do
-            segments << unpack_name(depth+1).split(/\./)
+          _with_offset(offset) do
+            segments << unpack_name(depth:depth+1).split(/\./)
           end
 
           break
@@ -96,31 +117,6 @@ module DNSer
       return segments.join('.')
     end
 
-    def verify_length(len)
-      start_length = @offset
-      yield
-      end_length   = @offset
-
-      if(end_length - start_length != len)
-        raise(FormatException, "A resource record's length didn't match its actual length; something is funky")
-      end
-    end
-
-    # Take a name, as a dotted string ("google.com") and return it as length-
-    # prefixed segments ("\x06google\x03com\x00").
-    #
-    # TODO: Compress the name properly, if we can ("\xc0\x0c")
-    def DnsUnpacker.pack_name(name)
-      result = ''
-
-      name.split(/\./).each do |segment|
-        result += [segment.length(), segment].pack("Ca*")
-      end
-
-      result += "\0"
-      return result
-    end
-
     # Shows where in the string we're currently editing. Mostly usefulu for
     # debugging.
     def to_s()
@@ -130,5 +126,26 @@ module DNSer
         return "#{@data[0..@offset-1].unpack("H*")}|#{@data[@offset..-1].unpack("H*")}"
       end
     end
+  end
+
+  class Packer
+    # Take a name, as a dotted string ("google.com") and return it as length-
+    # prefixed segments ("\x06google\x03com\x00").
+    #
+    # TODO: Compress the name properly, if we can ("\xc0\x0c")
+    def self.pack_name(name)
+      result = ''
+
+      name.split(/\./).each do |segment|
+        if segment.length() == 0
+          raise(FormatException, "Zero-length segments aren't allowed!")
+        end
+        result += [segment.length(), segment].pack("Ca*")
+      end
+
+      result += "\0"
+      return result
+    end
+
   end
 end

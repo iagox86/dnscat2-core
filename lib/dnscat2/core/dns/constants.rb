@@ -8,9 +8,10 @@
 ##
 
 module DNSer
-  # Classes - we only define IN (Internet)
-  CLS_IN                = 0x0001 # Internet
+  # Max recursion depth for parsing names
+  MAX_RECURSION_DEPTH = 16
 
+  CLS_IN                = 0x0001 # Internet
   CLSES = {
     CLS_IN => "IN",
   }
