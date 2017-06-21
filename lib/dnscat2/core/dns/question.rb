@@ -20,11 +20,11 @@ module DNSer
       @cls  = cls
     end
 
-    def Question.parse(unpacker)
+    def self.parse(unpacker)
       name = unpacker.unpack_name()
       type, cls = unpacker.unpack("nn")
 
-      return Question.new(name: name, type: type, cls: cls)
+      return self.new(name: name, type: type, cls: cls)
     end
 
     def pack(packer)
