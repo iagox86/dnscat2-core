@@ -40,6 +40,7 @@ module DNSer
     end
 
     def pack(packer)
+      packer.pack('n', 4) # length
       packer.pack('C4', *@address.hton().bytes())
     end
 
@@ -60,6 +61,9 @@ module DNSer
     end
 
     def pack(packer)
+      length = packer.pack_name(@name, dry_run: true)
+      packer.pack('n', length)
+
       packer.pack_name(@name)
     end
 
@@ -80,6 +84,8 @@ module DNSer
     end
 
     def pack(packer)
+      length = packer.pack_name(@name, dry_run: true)
+      packer.pack('n', length)
       packer.pack_name(@name)
     end
 
@@ -110,8 +116,13 @@ module DNSer
     end
 
     def pack(packer)
+      length = packer.pack_name(@primary, dry_run: true) + packer.pack_name(@responsible, dry_run: true, compress: false) + 20
+      packer.pack('n', length)
+
       packer.pack_name(@primary)
-      packer.pack_name(@responsible)
+      # It's a pain to calculate the length when both of these can be
+      # compressed, so we're just not going to compress the second name
+      packer.pack_name(@responsible, compress: false)
       packer.pack("NNNNN", @serial, @refresh, @retry_interval, @expire, @ttl)
     end
 
@@ -144,6 +155,9 @@ module DNSer
     end
 
     def pack(packer)
+      length = packer.pack_name(@name, dry_run: true) + 2
+      packer.pack('n', length)
+
       packer.pack_name(@name)
       packer.pack('n', @preference)
     end
@@ -168,6 +182,8 @@ module DNSer
     end
 
     def pack(packer)
+      packer.pack('n', @data.length + 1)
+
       packer.pack('Ca*', @data.length, @data)
     end
 
@@ -201,6 +217,8 @@ module DNSer
     end
 
     def pack(packer)
+      packer.pack('n', 16)
+
       packer.pack('C16', *@address.hton().bytes())
     end
 
@@ -223,6 +241,8 @@ module DNSer
     end
 
     def pack(packer)
+      packer.pack('n', @data.length)
+
       packer.pack('a*', @data)
     end
 

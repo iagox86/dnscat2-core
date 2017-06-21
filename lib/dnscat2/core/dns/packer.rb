@@ -48,14 +48,14 @@ module DNSer
     # prefixed segments ("\x06google\x03com\x00"). It also does a pointer
     # (\xc0\xXX) when possible!
     public
-    def pack_name(name, dry_run:false)
+    def pack_name(name, dry_run:false, compress:true)
       length = 0
       validate!(name)
 
       # `name` becomes nil at the end, unless there's a comma on the end, in
       # which case it's a 0-length string
       while name and name.length() > 0
-        if @segment_cache[name]
+        if compress && @segment_cache[name]
           # User a pointer if we've already done this
           if not dry_run
             @data += [0xc000 | @segment_cache[name]].pack("n")

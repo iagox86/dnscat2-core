@@ -16,7 +16,7 @@ module DNSer
       # Pack
       packer = Packer.new()
       record.pack(packer)
-      assert_equal("\x01\x02\x03\x04", packer.get())
+      assert_equal("\x00\x04\x01\x02\x03\x04", packer.get())
     end
 
     def test_parse_a()
@@ -50,7 +50,7 @@ module DNSer
       # Pack
       packer = Packer.new()
       record.pack(packer)
-      assert_equal("\x04test\x03com\x00", packer.get())
+      assert_equal("\x00\x0a\x04test\x03com\x00", packer.get())
     end
 
     def test_parse_ns()
@@ -72,7 +72,7 @@ module DNSer
       # Pack
       packer = Packer.new()
       record.pack(packer)
-      assert_equal("\x04test\x03com\x00", packer.get())
+      assert_equal("\x00\x0a\x04test\x03com\x00", packer.get())
     end
 
     def test_parse_cname()
@@ -115,8 +115,9 @@ module DNSer
       # Pack
       packer = Packer.new()
       record.pack(packer)
-      expected = "\x04test\x03com\x00" +
-        "\x05other\xc0\x00" +
+      expected = "\x00\x2e" +
+        "\x04test\x03com\x00" +
+        "\x05other\x04test\x03com\x00" +
         "\x41\x42\x43\x44" +
         "\x45\x46\x47\x48" +
         "\x49\x4a\x4b\x4c" +
@@ -159,7 +160,7 @@ module DNSer
       # Pack
       packer = Packer.new()
       record.pack(packer)
-      assert_equal("\x04test\x03com\x00\x00\x0a", packer.get())
+      assert_equal("\x00\x0c\x04test\x03com\x00\x00\x0a", packer.get())
     end
 
     def test_parse_mx()
@@ -182,7 +183,7 @@ module DNSer
       # Pack
       packer = Packer.new()
       record.pack(packer)
-      assert_equal("\x0cHello world!", packer.get())
+      assert_equal("\x00\x0d\x0cHello world!", packer.get())
     end
 
     def test_parse_txt()
@@ -204,7 +205,7 @@ module DNSer
       # Pack
       packer = Packer.new()
       record.pack(packer)
-      assert_equal("\x20\x01\x0d\xb8\x85\xa3\x00\x00\x00\x00\x8a\x2e\x03\x70\x73\x34", packer.get())
+      assert_equal("\x00\x10\x20\x01\x0d\xb8\x85\xa3\x00\x00\x00\x00\x8a\x2e\x03\x70\x73\x34", packer.get())
     end
 
     def test_parse_aaaa()
@@ -239,7 +240,7 @@ module DNSer
       # Pack
       packer = Packer.new()
       record.pack(packer)
-      assert_equal('hihihi', packer.get())
+      assert_equal("\x00\x06hihihi", packer.get())
     end
 
     def test_parse_rrunknown()

@@ -136,5 +136,16 @@ module DNSer
       assert_equal(6, packer.pack_name('www.test.com', dry_run:true))
       assert_equal("\x04test\x03com\x00", packer.get())
     end
+
+    def test_dont_compress()
+      packer = Packer.new()
+      assert_equal(14, packer.pack_name('www.test.com'))
+      assert_equal(10, packer.pack_name('test.com', compress: false))
+      assert_equal("\x03www\x04test\x03com\x00\x04test\x03com\x00", packer.get())
+      packer = Packer.new()
+      assert_equal(10, packer.pack_name('test.com'))
+      assert_equal(14, packer.pack_name('www.test.com', compress: false))
+      assert_equal("\x04test\x03com\x00\x03www\x04test\x03com\x00", packer.get())
+    end
   end
 end
