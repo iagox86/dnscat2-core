@@ -61,7 +61,7 @@ module DNSer
   end
 
   class CNAME_Test < ::Test::Unit::TestCase
-    def test_ns()
+    def test_cname()
       # Create
       record = CNAME.new(name: 'test.com')
       assert_equal('test.com', record.name)
@@ -75,7 +75,7 @@ module DNSer
       assert_equal("\x04test\x03com\x00", packer.get())
     end
 
-    def test_parse_ns()
+    def test_parse_cname()
       unpacker = Unpacker.new("\x04test\x03com\x00")
       record = CNAME.parse(unpacker)
       assert_equal('test.com', record.name)
@@ -147,7 +147,7 @@ module DNSer
   end
 
   class MX_Test < ::Test::Unit::TestCase
-    def test_ns()
+    def test_mx()
       # Create
       record = MX.new(name: 'test.com', preference: 10)
       assert_equal('test.com', record.name)
@@ -162,11 +162,91 @@ module DNSer
       assert_equal("\x04test\x03com\x00\x00\x0a", packer.get())
     end
 
-    def test_parse_ns()
+    def test_parse_mx()
       unpacker = Unpacker.new("\x00\x0a\x04test\x03com\x00")
       record = MX.parse(unpacker)
       assert_equal('test.com', record.name)
       assert_equal(10, record.preference)
+    end
+  end
+
+  class TXT_Test < ::Test::Unit::TestCase
+    def test_txt()
+      # Create
+      record = TXT.new(data: 'Hello world!')
+      assert_equal('Hello world!', record.data)
+
+      # Stringify
+      assert_equal('Hello world! [TXT]', record.to_s())
+
+      # Pack
+      packer = Packer.new()
+      record.pack(packer)
+      assert_equal("\x0cHello world!", packer.get())
+    end
+
+    def test_parse_txt()
+      unpacker = Unpacker.new("\x0cHello world!")
+      record = TXT.parse(unpacker)
+      assert_equal('Hello world!', record.data)
+    end
+  end
+
+  class AAAA_Test < ::Test::Unit::TestCase
+    def test_aaaa()
+      # Create
+      record = AAAA.new(address: '2001:db8:85a3::8a2e:370:7334')
+      assert_equal(IPAddr.new('2001:db8:85a3::8a2e:370:7334'), record.address)
+
+      # Stringify
+      assert_equal('2001:db8:85a3::8a2e:370:7334 [AAAA]', record.to_s)
+
+      # Pack
+      packer = Packer.new()
+      record.pack(packer)
+      assert_equal("\x20\x01\x0d\xb8\x85\xa3\x00\x00\x00\x00\x8a\x2e\x03\x70\x73\x34", packer.get())
+    end
+
+    def test_parse_aaaa()
+      unpacker = Unpacker.new("\x20\x01\x0d\xb8\x85\xa3\x00\x00\x00\x00\x8a\x2e\x03\x70\x73\x34")
+      record = AAAA.parse(unpacker)
+      assert_equal(IPAddr.new('2001:db8:85a3::8a2e:370:7334'), record.address)
+    end
+
+    def test_invalid_aaaa()
+      assert_raises(FormatException) do
+        AAAA.new(address: 123)
+      end
+      assert_raises(FormatException) do
+        AAAA.new(address: '1.2.3.4')
+      end
+      assert_raises(FormatException) do
+        AAAA.new(address: '500.hi')
+      end
+    end
+  end
+
+  class RRUnknown_Test < ::Test::Unit::TestCase
+    def test_rrunknown()
+      # Create
+      record = RRUnknown.new(type: 0x1337, data: 'hihihi')
+      assert_equal(0x1337, record.type)
+      assert_equal('hihihi', record.data)
+
+      # Stringify
+      assert_equal('(Unknown record type 0x1337: hihihi)', record.to_s())
+
+      # Pack
+      packer = Packer.new()
+      record.pack(packer)
+      assert_equal('hihihi', packer.get())
+    end
+
+    def test_parse_rrunknown()
+      unpacker = Unpacker.new('hihihi')
+      record = RRUnknown.parse(unpacker, 0x1337, 0x06)
+      assert_equal(0x1337, record.type)
+      assert_equal('hihihi', record.data)
     end
   end
 end

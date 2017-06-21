@@ -35,12 +35,12 @@ module DNSer
     end
 
     def self.parse(unpacker)
-      data = unpacker.unpack('AAAA').join()
+      data = unpacker.unpack('a4').join()
       return self.new(address: IPAddr.ntop(data))
     end
 
     def pack(packer)
-      packer.pack('CCCC', *@address.hton().bytes())
+      packer.pack('C4', *@address.hton().bytes())
     end
 
     def to_s()
@@ -153,71 +153,81 @@ module DNSer
     end
   end
 
-#  class TXT
-#    attr_accessor :data
-#
-#    def initialize(data)
-#      @data = data
-#    end
-#
-#    def self.parse(data)
-#      len = data.unpack("C").pop()
-#      bytes = data.unpack("A#{len}").pop()
-#
-#      return self.new(bytes)
-#    end
-#
-#    def to_bytes()
-#      return [@data.length, data].pack("Ca*")
-#    end
-#
-#    def to_s()
-#      return "#{@data} [TXT]"
-#    end
-#  end
-#
-#  class AAAA
-#    attr_accessor :address
-#
-#    def initialize(address)
-#      @address = IPAddr.new(address)
-#
-#      if(!@address.ipv6?())
-#        raise(FormatException, "IPv6 address required!")
-#      end
-#    end
-#
-#    def self.parse(data)
-#      address = data.unpack("A16").pop()
-#      return self.new(IPAddr.ntop(address))
-#    end
-#
-#    def to_bytes()
-#      return @address.hton()
-#    end
-#
-#    def to_s()
-#      return "#{@address} [A]"
-#    end
-#  end
-#
-#  class RRUnknown
-#    def initialize(type, data)
-#      @type = type
-#      @data = data
-#    end
-#
-#    def self.parse(type, data, length)
-#      data = data.unpack("A#{length}").pop()
-#      return self.new(type, data)
-#    end
-#
-#    def to_bytes()
-#      return @data
-#    end
-#
-#    def to_s()
-#      return "(Unknown record type #{@type}): #{@data.unpack("H*")}"
-#    end
-#  end
+  class TXT
+    attr_accessor :data
+
+    def initialize(data:)
+      @data = data
+    end
+
+    def self.parse(unpacker)
+      len = unpacker.unpack_one("C")
+      data = unpacker.unpack_one("a#{len}")
+
+      return self.new(data: data)
+    end
+
+    def pack(packer)
+      packer.pack('Ca*', @data.length, @data)
+    end
+
+    def to_s()
+      return "#{@data} [TXT]"
+    end
+  end
+
+  class AAAA
+    attr_accessor :address
+
+    def initialize(address:)
+      if !address.is_a?(String)
+        raise(FormatException, "String required!")
+      end
+
+      begin
+        @address = IPAddr.new(address)
+      rescue IPAddr::InvalidAddressError => e
+        raise(FormatException, "Invalid address: %s" % e)
+      end
+
+      if !@address.ipv6?()
+        raise(FormatException, "IPv6 address required!")
+      end
+    end
+
+    def self.parse(unpacker)
+      data = unpacker.unpack('a16').join()
+      return self.new(address: IPAddr.ntop(data))
+    end
+
+    def pack(packer)
+      packer.pack('C16', *@address.hton().bytes())
+    end
+
+
+    def to_s()
+      return "#{@address} [AAAA]"
+    end
+  end
+
+  class RRUnknown
+    attr_reader :type, :data
+    def initialize(type:, data:)
+      @type = type
+      @data = data
+    end
+
+    def self.parse(unpacker, type, length)
+      data = unpacker.unpack_one("a#{length}")
+      return self.new(type: type, data: data)
+    end
+
+    def pack(packer)
+      packer.pack('a*', @data)
+    end
+
+    def to_s()
+      return "(Unknown record type 0x%04x: %s)" % [@type, @data]
+    end
+  end
 end
