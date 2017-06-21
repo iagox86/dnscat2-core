@@ -35,6 +35,11 @@ module DNSer
     end
 
     def self.parse(unpacker)
+      length = unpacker.unpack_one('n')
+      if length != 4
+        raise(FormatException, "Invalid A record!")
+      end
+
       data = unpacker.unpack('a4').join()
       return self.new(address: IPAddr.ntop(data))
     end
@@ -57,6 +62,9 @@ module DNSer
     end
 
     def self.parse(unpacker)
+      # We don't really need the name for anything, so just discard it
+      unpacker.unpack('n')
+
       return self.new(name: unpacker.unpack_name())
     end
 
@@ -80,6 +88,9 @@ module DNSer
     end
 
     def self.parse(unpacker)
+      # We don't really need the name for anything, so just discard it
+      unpacker.unpack('n')
+
       return self.new(name: unpacker.unpack_name())
     end
 
@@ -108,6 +119,11 @@ module DNSer
     end
 
     def self.parse(unpacker)
+      length = unpacker.unpack_one('n')
+      if length < 22
+        raise(FormatException, "Invalid SOA record")
+      end
+
       primary = unpacker.unpack_name()
       responsible = unpacker.unpack_name()
       serial, refresh, retry_interval, expire, ttl = unpacker.unpack("NNNNN")
@@ -148,6 +164,11 @@ module DNSer
     end
 
     def self.parse(unpacker)
+      length = unpacker.unpack_one('n')
+      if length < 3
+        raise(FormatException, "Invalid MX record")
+      end
+
       preference = unpacker.unpack_one('n')
       name = unpacker.unpack_name()
 
@@ -175,7 +196,17 @@ module DNSer
     end
 
     def self.parse(unpacker)
+      length = unpacker.unpack_one('n')
+      if length < 1
+        raise(FormatException, "Invalid TXT record")
+      end
+
       len = unpacker.unpack_one("C")
+
+      if len != length - 1
+        raise(FormatException, "Invalid TXT record")
+      end
+
       data = unpacker.unpack_one("a#{len}")
 
       return self.new(data: data)
@@ -212,6 +243,11 @@ module DNSer
     end
 
     def self.parse(unpacker)
+      length = unpacker.unpack_one('n')
+      if length != 16
+        raise(FormatException, "Invalid AAAA record")
+      end
+
       data = unpacker.unpack('a16').join()
       return self.new(address: IPAddr.ntop(data))
     end
@@ -235,7 +271,8 @@ module DNSer
       @data = data
     end
 
-    def self.parse(unpacker, type, length)
+    def self.parse(unpacker, type)
+      length = unpacker.unpack_one('n')
       data = unpacker.unpack_one("a#{length}")
       return self.new(type: type, data: data)
     end
