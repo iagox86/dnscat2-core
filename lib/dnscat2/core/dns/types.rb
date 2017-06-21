@@ -36,7 +36,7 @@ module DNSer
 
     def self.parse(unpacker)
       data = unpacker.unpack('AAAA').join()
-      return A.new(address: IPAddr.ntop(data))
+      return self.new(address: IPAddr.ntop(data))
     end
 
     def pack(packer)
@@ -106,7 +106,7 @@ module DNSer
       responsible = unpacker.unpack_name()
       serial, refresh, retry_interval, expire, ttl = unpacker.unpack("NNNNN")
 
-      return SOA.new(primary: primary, responsible: responsible, serial: serial, refresh: refresh, retry_interval: retry_interval, expire: expire, ttl: ttl)
+      return self.new(primary: primary, responsible: responsible, serial: serial, refresh: refresh, retry_interval: retry_interval, expire: expire, ttl: ttl)
     end
 
     def pack(packer)
@@ -128,35 +128,31 @@ module DNSer
     end
   end
 
-#  class MX
-#    attr_accessor :preference, :name
-#
-#    def initialize(name, preference = 10)
-#      if(!name.is_a?(String) || !preference.is_a?(Fixnum))
-#        raise ArgumentError("Creating an MX record wrong! Please file a bug!")
-#      end
-#      @name = name
-#      @preference = preference
-#    end
-#
-#    def self.parse(data)
-#      preference = data.unpack("n").pop()
-#      name = data.unpack_name()
-#
-#      return MX.new(name, preference)
-#    end
-#
-#    def pack(packer)
-#      packer.pack_name(name)
-#      name = DNSer::Packet::DnsUnpacker.pack_name(@name)
-#      return [@preference, name].pack("na*")
-#    end
-#
-#    def to_s()
-#      return "#{@preference} #{@name} [MX]"
-#    end
-#  end
-#
+  class MX
+    attr_accessor :preference, :name
+
+    def initialize(name:, preference:)
+      @name = name
+      @preference = preference
+    end
+
+    def self.parse(unpacker)
+      preference = unpacker.unpack_one('n')
+      name = unpacker.unpack_name()
+
+      return self.new(name: name, preference: preference)
+    end
+
+    def pack(packer)
+      packer.pack_name(@name)
+      packer.pack('n', @preference)
+    end
+
+    def to_s()
+      return "#{@preference} #{@name} [MX]"
+    end
+  end
+
 #  class TXT
 #    attr_accessor :data
 #
@@ -168,7 +164,7 @@ module DNSer
 #      len = data.unpack("C").pop()
 #      bytes = data.unpack("A#{len}").pop()
 #
-#      return TXT.new(bytes)
+#      return self.new(bytes)
 #    end
 #
 #    def to_bytes()
@@ -193,7 +189,7 @@ module DNSer
 #
 #    def self.parse(data)
 #      address = data.unpack("A16").pop()
-#      return AAAA.new(IPAddr.ntop(address))
+#      return self.new(IPAddr.ntop(address))
 #    end
 #
 #    def to_bytes()
@@ -213,7 +209,7 @@ module DNSer
 #
 #    def self.parse(type, data, length)
 #      data = data.unpack("A#{length}").pop()
-#      return RRUnknown.new(type, data)
+#      return self.new(type, data)
 #    end
 #
 #    def to_bytes()

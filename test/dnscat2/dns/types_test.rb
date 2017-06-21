@@ -144,17 +144,29 @@ module DNSer
       assert_equal(0x4d4e4f50, record.expire)
       assert_equal(0x51525354, record.ttl)
     end
+  end
 
-#    def test_invalid_soa()
-#      assert_raises(FormatException) do
-#        A.new(address: 123)
-#      end
-#      assert_raises(FormatException) do
-#        A.new(address: '::1')
-#      end
-#      assert_raises(FormatException) do
-#        A.new(address: '500.hi')
-#      end
-#    end
+  class MX_Test < ::Test::Unit::TestCase
+    def test_ns()
+      # Create
+      record = MX.new(name: 'test.com', preference: 10)
+      assert_equal('test.com', record.name)
+      assert_equal(10, record.preference)
+
+      # Stringify
+      assert_equal('10 test.com [MX]', record.to_s())
+
+      # Pack
+      packer = Packer.new()
+      record.pack(packer)
+      assert_equal("\x04test\x03com\x00\x00\x0a", packer.get())
+    end
+
+    def test_parse_ns()
+      unpacker = Unpacker.new("\x00\x0a\x04test\x03com\x00")
+      record = MX.parse(unpacker)
+      assert_equal('test.com', record.name)
+      assert_equal(10, record.preference)
+    end
   end
 end
