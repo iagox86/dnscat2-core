@@ -7,7 +7,7 @@ module DNSer
   class PackerTest < ::Test::Unit::TestCase
     def test_pack()
       packer = Packer.new()
-      packer.pack('NnC', [0x41424344, 0x4546, 0x47])
+      packer.pack('NnC', 0x41424344, 0x4546, 0x47)
       assert_equal('ABCDEFG', packer.get())
     end
 
@@ -19,9 +19,9 @@ module DNSer
 
     def test_pack_name()
       packer = Packer.new()
-      packer.pack('N', [0x41424344])
-      packer.pack('n', [0x4546])
-      packer.pack('C', [0x47])
+      packer.pack('N', 0x41424344)
+      packer.pack('n', 0x4546)
+      packer.pack('C', 0x47)
       packer.pack_name('test.com')
       assert_equal("ABCDEFG\x04test\x03com\x00", packer.get())
     end
@@ -34,7 +34,7 @@ module DNSer
 
     def test_pack_name_pointer()
       packer = Packer.new()
-      packer.pack('N', [0x41424344])
+      packer.pack('N', 0x41424344)
       packer.pack_name('test.com')
       packer.pack_name('test.com')
       assert_equal("ABCD\x04test\x03com\x00\xc0\x04", packer.get())
@@ -42,13 +42,13 @@ module DNSer
 
     def test_pack_name_partial_pointer()
       packer = Packer.new()
-      packer.pack('N', [0x41424344])
+      packer.pack('N', 0x41424344)
       packer.pack_name('www.test.com')
       packer.pack_name('test.com')
       assert_equal("ABCD\x03www\x04test\x03com\x00\xc0\x08", packer.get())
 
       packer = Packer.new()
-      packer.pack('N', [0x41424344])
+      packer.pack('N', 0x41424344)
       packer.pack_name('test.com')
       packer.pack_name('www.test.com')
       assert_equal("ABCD\x04test\x03com\x00\x03www\xc0\x04", packer.get())

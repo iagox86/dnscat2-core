@@ -34,13 +34,13 @@ module DNSer
       end
     end
 
-    def self.parse(packed_data)
-      data = packed_data.unpack('AAAA').join()
+    def self.parse(unpacker)
+      data = unpacker.unpack('AAAA').join()
       return A.new(address: IPAddr.ntop(data))
     end
 
     def pack(packer)
-      packer.pack('CCCC', @address.hton().bytes())
+      packer.pack('CCCC', *@address.hton().bytes())
     end
 
     def to_s()
@@ -55,8 +55,8 @@ module DNSer
       @name = name
     end
 
-    def self.parse(data)
-      return NS.new(name: data.unpack_name())
+    def self.parse(unpacker)
+      return self.new(name: unpacker.unpack_name())
     end
 
     def pack(packer)
@@ -68,64 +68,66 @@ module DNSer
     end
   end
 
-#  class CNAME
-#    attr_accessor :name
-#
-#    def initialize(name)
-#      @name = name
-#    end
-#
-#    def self.parse(data)
-#      return CNAME.new(data.unpack_name())
-#    end
-#
-#    def to_bytes()
-#      return DNSer::Packet::DnsUnpacker.pack_name(@name)
-#    end
-#
-#    def to_s()
-#      return "#{@name} [CNAME]"
-#    end
-#  end
-#
-#  class SOA
-#    attr_accessor :primary, :responsible, :serial, :refresh, :retry_interval, :expire, :ttl
-#
-#    def initialize(primary, responsible, serial, refresh, retry_interval, expire, ttl)
-#      @primary = primary
-#      @responsible = responsible
-#      @serial = serial
-#      @refresh = refresh
-#      @retry_interval = retry_interval
-#      @expire = expire
-#      @ttl = ttl
-#    end
-#
-#    def self.parse(data)
-#      primary = data.unpack_name()
-#      responsible = data.unpack_name()
-#      serial, refresh, retry_interval, expire, ttl = data.unpack("NNNNN")
-#
-#      return SOA.new(primary, responsible, serial, refresh, retry_interval, expire, ttl)
-#    end
-#
-#    def to_bytes()
-#      return [
-#        DNSer::Packet::DnsUnpacker.pack_name(@primary),
-#        DNSer::Packet::DnsUnpacker.pack_name(@responsible),
-#        @serial,
-#        @refresh,
-#        @retry_interval,
-#        @expire,
-#        @ttl
-#      ].pack("a*a*NNNNN")
-#    end
-#
-#    def to_s()
-#      return "Primary name server = #{@primary}, responsible authority's mailbox: #{@responsible}, serial number: #{@serial}, refresh interval: #{@refresh}, retry interval: #{@retry_interval}, expire limit: #{@expire}, min_ttl: #{@ttl} [SOA]"
-#    end
-#  end
-#
+  class CNAME
+    attr_accessor :name
+
+    def initialize(name:)
+      @name = name
+    end
+
+    def self.parse(unpacker)
+      return self.new(name: unpacker.unpack_name())
+    end
+
+    def pack(packer)
+      packer.pack_name(@name)
+    end
+
+    def to_s()
+      return "#{@name} [CNAME]"
+    end
+  end
+
+  class SOA
+    attr_accessor :primary, :responsible, :serial, :refresh, :retry_interval, :expire, :ttl
+
+    def initialize(primary:, responsible:, serial:, refresh:, retry_interval:, expire:, ttl:)
+      @primary = primary
+      @responsible = responsible
+      @serial = serial
+      @refresh = refresh
+      @retry_interval = retry_interval
+      @expire = expire
+      @ttl = ttl
+    end
+
+    def self.parse(unpacker)
+      primary = unpacker.unpack_name()
+      responsible = unpacker.unpack_name()
+      serial, refresh, retry_interval, expire, ttl = unpacker.unpack("NNNNN")
+
+      return SOA.new(primary: primary, responsible: responsible, serial: serial, refresh: refresh, retry_interval: retry_interval, expire: expire, ttl: ttl)
+    end
+
+    def pack(packer)
+      packer.pack_name(@primary)
+      packer.pack_name(@responsible)
+      packer.pack("NNNNN", @serial, @refresh, @retry_interval, @expire, @ttl)
+    end
+
+    def to_s()
+      return "Primary name server = %s, responsible authority's mailbox: %s, serial number: 0x%08x, refresh interval: 0x%08x, retry interval: 0x%08x, expire limit: 0x%08x, min_ttl: 0x%08x, [SOA]" % [
+        @primary,
+        @responsible,
+        @serial,
+        @refresh,
+        @retry_interval,
+        @expire,
+        @ttl,
+      ]
+    end
+  end
+
 #  class MX
 #    attr_accessor :preference, :name
 #

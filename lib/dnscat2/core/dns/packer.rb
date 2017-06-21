@@ -25,7 +25,7 @@ module DNSer
     end
 
     public
-    def pack(format, data)
+    def pack(format, *data)
       @data += data.pack(format)
     end
 
