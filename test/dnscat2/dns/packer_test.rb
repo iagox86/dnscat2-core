@@ -13,8 +13,9 @@ module DNSer
 
     def test_pack_name_single_segment()
       packer = Packer.new()
-      packer.pack_name('test')
+      length = packer.pack_name('test')
       assert_equal("\x04test\x00", packer.get())
+      assert_equal(6, length)
     end
 
     def test_pack_name()
@@ -22,35 +23,40 @@ module DNSer
       packer.pack('N', 0x41424344)
       packer.pack('n', 0x4546)
       packer.pack('C', 0x47)
-      packer.pack_name('test.com')
+      length = packer.pack_name('test.com')
       assert_equal("ABCDEFG\x04test\x03com\x00", packer.get())
+      assert_equal(10, length)
     end
 
     def test_pack_name_that_ends_with_period()
       packer = Packer.new()
-      packer.pack_name('test.com.')
+      length = packer.pack_name('test.com.')
       assert_equal("\x04test\x03com\x00", packer.get())
+      assert_equal(10, length)
     end
 
     def test_pack_name_pointer()
       packer = Packer.new()
       packer.pack('N', 0x41424344)
-      packer.pack_name('test.com')
-      packer.pack_name('test.com')
+      length = packer.pack_name('test.com')
+      assert_equal(10, length)
+
+      length = packer.pack_name('test.com')
       assert_equal("ABCD\x04test\x03com\x00\xc0\x04", packer.get())
+      assert_equal(2, length)
     end
 
     def test_pack_name_partial_pointer()
       packer = Packer.new()
       packer.pack('N', 0x41424344)
-      packer.pack_name('www.test.com')
-      packer.pack_name('test.com')
+      assert_equal(14, packer.pack_name('www.test.com'))
+      assert_equal(2, packer.pack_name('test.com'))
       assert_equal("ABCD\x03www\x04test\x03com\x00\xc0\x08", packer.get())
 
       packer = Packer.new()
       packer.pack('N', 0x41424344)
-      packer.pack_name('test.com')
-      packer.pack_name('www.test.com')
+      assert_equal(10, packer.pack_name('test.com'))
+      assert_equal(6, packer.pack_name('www.test.com'))
       assert_equal("ABCD\x04test\x03com\x00\x03www\xc0\x04", packer.get())
     end
 
@@ -117,6 +123,18 @@ module DNSer
       assert_raises(FormatException) do
         packer.pack_name('A' + name)
       end
+    end
+
+    def test_dry_run()
+      packer = Packer.new()
+      assert_equal(14, packer.pack_name('www.test.com', dry_run:true))
+      assert_equal(10, packer.pack_name('test.com', dry_run:true))
+      assert_equal("", packer.get())
+
+      packer = Packer.new()
+      assert_equal(10, packer.pack_name('test.com'))
+      assert_equal(6, packer.pack_name('www.test.com', dry_run:true))
+      assert_equal("\x04test\x03com\x00", packer.get())
     end
   end
 end
