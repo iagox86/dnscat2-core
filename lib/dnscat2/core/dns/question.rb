@@ -39,42 +39,5 @@ module DNSer
         CLSES[@cls]  || '<0x%04x?>' % @cls,
       ]
     end
-
-#    def answer(ttl, *args)
-#      case @type
-#      when TYPE_A
-#        rr = A.new(*args)
-#      when TYPE_NS
-#        rr = NS.new(*args)
-#      when TYPE_CNAME
-#        rr = CNAME.new(*args)
-#      when TYPE_MX
-#        rr = MX.new(*args)
-#      when TYPE_TXT
-#        rr = TXT.new(*args)
-#      when TYPE_AAAA
-#        rr = AAAA.new(*args)
-#      when TYPE_ANY
-#        raise(FormatException, "We can't automatically create a response for an 'ANY' request :(")
-#      else
-#        raise(FormatException, "We don't know how to answer that type of request!")
-#      end
-#
-#      return Answer.new(
-#        name: @name,
-#        type: @type,
-#        cls: @cls,
-#        ttl: ttl,
-#        rr: rr,
-#      )
-#    end
-
-#    def ==(other)
-#      if(!other.is_a?(Question))
-#        return false
-#      end
-#
-#      return (@name == other.name) && (@type == other.type) && (@cls == other.cls)
-#    end
   end
 end

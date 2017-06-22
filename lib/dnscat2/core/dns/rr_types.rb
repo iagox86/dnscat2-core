@@ -179,8 +179,8 @@ module DNSer
       length = packer.pack_name(@name, dry_run: true) + 2
       packer.pack('n', length)
 
-      packer.pack_name(@name)
       packer.pack('n', @preference)
+      packer.pack_name(@name)
     end
 
     def to_s()

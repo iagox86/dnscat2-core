@@ -167,7 +167,7 @@ module DNSer
       # Pack
       packer = Packer.new()
       record.pack(packer)
-      assert_equal("\x00\x0c\x04test\x03com\x00\x00\x0a", packer.get())
+      assert_equal("\x00\x0c\x00\x0a\x04test\x03com\x00", packer.get())
     end
 
     def test_unpack_mx()

@@ -32,7 +32,5 @@ module DNSer
       question = Question.new(name: 'test.com', type: 0x1234, cls: 0x4321)
       assert_equal('test.com [<0x1234?> <0x4321?>]', question.to_s())
     end
-
-    # TODO: Test .answer()
   end
 end
