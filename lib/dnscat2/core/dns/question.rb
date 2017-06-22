@@ -43,26 +43,32 @@ module DNSer
 #    def answer(ttl, *args)
 #      case @type
 #      when TYPE_A
-#        record = A.new(*args)
+#        rr = A.new(*args)
 #      when TYPE_NS
-#        record = NS.new(*args)
+#        rr = NS.new(*args)
 #      when TYPE_CNAME
-#        record = CNAME.new(*args)
+#        rr = CNAME.new(*args)
 #      when TYPE_MX
-#        record = MX.new(*args)
+#        rr = MX.new(*args)
 #      when TYPE_TXT
-#        record = TXT.new(*args)
+#        rr = TXT.new(*args)
 #      when TYPE_AAAA
-#        record = AAAA.new(*args)
+#        rr = AAAA.new(*args)
 #      when TYPE_ANY
 #        raise(FormatException, "We can't automatically create a response for an 'ANY' request :(")
 #      else
 #        raise(FormatException, "We don't know how to answer that type of request!")
 #      end
 #
-#      return Answer.new(@name, @type, @cls, ttl, record)
+#      return Answer.new(
+#        name: @name,
+#        type: @type,
+#        cls: @cls,
+#        ttl: ttl,
+#        rr: rr,
+#      )
 #    end
-#
+
 #    def ==(other)
 #      if(!other.is_a?(Question))
 #        return false
