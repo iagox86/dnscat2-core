@@ -25,9 +25,9 @@ module Dnscat2
         end
 
         def self.parse(options, data)
-          has_null_terminator?(data)
+          verify_nt!(data)
           reason, data = data.unpack("Z*a*")
-          exactly?(data, 0)
+          verify_exactly!(data, 0)
 
           return self.new(
             options: options,

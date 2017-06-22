@@ -28,18 +28,18 @@ module Dnscat2
           # Body
           # (uint16_t) initial sequence number
           # (uint16_t) options
-          at_least?(data, 4)
+          verify_length!(data, 4)
           isn, options, data = data.unpack('nna*')
 
           # If OPT_NAME is set:
           #   (ntstring) session_name
           if((options & OPT_NAME) == OPT_NAME)
-            has_null_terminator?(data)
+            verify_nt!(data)
             name, data = data.unpack("Z*a*")
           end
 
           # Make sure there's no hanging data
-          exactly?(data, 0)
+          verify_exactly!(data, 0)
 
           return self.new(
             isn: isn,

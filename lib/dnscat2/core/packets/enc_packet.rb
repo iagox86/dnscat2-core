@@ -24,7 +24,7 @@ module Dnscat2
         end
 
         def self.parse(data)
-          exactly?(data, 64)
+          verify_exactly!(data, 64)
           public_key_x, public_key_y = data.unpack("a32a32")
 
           return self.new(
@@ -54,7 +54,7 @@ module Dnscat2
         end
 
         def self.parse(data)
-          exactly?(data, 32)
+          verify_exactly!(data, 32)
           authenticator = data.unpack("a32").pop
 
           return self.new(
@@ -92,16 +92,16 @@ module Dnscat2
         end
 
         def self.parse(data)
-          at_least?(data, 4)
+          verify_length!(data, 4)
 
           subtype, flags, data = data.unpack("nna*")
 
           case subtype
           when SUBTYPE_INIT
-            exactly?(data, 64)
+            verify_exactly!(data, 64)
             body = EncPacketInit.parse(data)
           when SUBTYPE_AUTH
-            exactly?(data, 32)
+            verify_exactly!(data, 32)
             body = EncPacketAuth.parse(data)
           else
             raise(DnscatException, "Unknown subtype: #{subtype}")

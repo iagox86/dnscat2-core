@@ -48,7 +48,7 @@ module Dnscat2
 
         private
         def self.parse_header(data)
-          at_least?(data, 5)
+          verify_length!(data, 5)
 
           # (uint16_t) packet_id
           # (uint8_t) message_type
@@ -77,10 +77,10 @@ module Dnscat2
           when MESSAGE_TYPE_SYN
             body = SynPacket.parse(data)
           when MESSAGE_TYPE_MSG
-            not_null?(options, "`options` is required when parsing a MSG packet!")
+            verify_not_null!(options, "`options` is required when parsing a MSG packet!")
             body = MsgPacket.parse(options, data)
           when MESSAGE_TYPE_FIN
-            not_null?(options, "`options` is required when parsing a FIN packet!")
+            verify_not_null!(options, "`options` is required when parsing a FIN packet!")
             body = FinPacket.parse(options, data)
           when MESSAGE_TYPE_PING
             body = PingPacket.parse(nil, data)

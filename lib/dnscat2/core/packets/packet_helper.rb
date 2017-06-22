@@ -15,13 +15,13 @@ module Dnscat2
   module Core
     module Packets
       module PacketHelper
-        def at_least?(data, needed)
+        def verify_length!(data, needed)
           if data.length < needed
             raise(DnscatException, "Failed to parse packet (too short or truncated)!")
           end
         end
 
-        def exactly?(data, needed)
+        def verify_exactly!(data, needed)
           if data.length < needed
             raise(DnscatException, "Failed to parse packet (too short or truncated)!")
           end
@@ -30,13 +30,13 @@ module Dnscat2
           end
         end
 
-        def has_null_terminator?(data)
+        def verify_nt!(data)
           if data.index("\x00").nil?
             raise(DnscatException, "Missing null terminator!")
           end
         end
 
-        def not_null?(data, msg)
+        def verify_not_null!(data, msg)
           if data.nil?
             raise(DnscatException, msg)
           end

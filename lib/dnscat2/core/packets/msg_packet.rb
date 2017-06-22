@@ -27,7 +27,7 @@ module Dnscat2
         end
 
         def self.parse(options, data)
-          at_least?(data, 4)
+          verify_length!(data, 4)
 
           seq, ack, data = data.unpack("nna*")
 
