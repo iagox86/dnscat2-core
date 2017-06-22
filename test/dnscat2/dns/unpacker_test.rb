@@ -183,5 +183,13 @@ module DNSer
         unpacker.unpack_name()
       end
     end
+
+    def test_to_s()
+      unpacker = Unpacker.new("AAAABBC")
+      unpacker.unpack_one("N")
+
+      expected = "00000000  41 41 41 41<42>42 43                              AAAABBC"
+      assert_equal(expected, unpacker.to_s())
+    end
   end
 end

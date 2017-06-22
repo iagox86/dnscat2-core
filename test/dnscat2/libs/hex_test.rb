@@ -57,6 +57,60 @@ module Dnscat2
         str = Hex.to_s('AAAAAAAAAAAAAAAA', indent: 2)
         assert_equal('  00000000  41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA', str)
       end
+
+      def test_offset()
+        # Start
+        str = Hex.to_s('AAAAAAAAAAAAAAAAAAAA', offset: 0)
+        assert_equal("00000000 <41>41 41 41 41 41 41 41 41 41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA\n" +
+                     "00000010  41 41 41 41                                       AAAA", str)
+
+        # Start of line
+        str = Hex.to_s('AAAAAAAAAAAAAAAAAAAA', offset: 16)
+        assert_equal("00000000  41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA\n" +
+                     "00000010 <41>41 41 41                                       AAAA", str)
+
+        # Middle of line
+        str = Hex.to_s('AAAAAAAAAAAAAAAAAAAA', offset: 8)
+        assert_equal("00000000  41 41 41 41 41 41 41 41<41>41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA\n" +
+                     "00000010  41 41 41 41                                       AAAA", str)
+
+        # End of line
+        str = Hex.to_s('AAAAAAAAAAAAAAAAAAAA', offset: 15)
+        assert_equal("00000000  41 41 41 41 41 41 41 41 41 41 41 41 41 41 41<41>  AAAAAAAAAAAAAAAA\n" +
+                     "00000010  41 41 41 41                                       AAAA", str)
+
+        # Partial block
+        str = Hex.to_s('AAAAAAAAAAAAAAAAAAAA', offset: 18)
+        assert_equal("00000000  41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA\n" +
+                     "00000010  41 41<41>41                                       AAAA", str)
+
+        # End
+        str = Hex.to_s('AAAAAAAAAAAAAAAAAAAA', offset: 19)
+        assert_equal("00000000  41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA\n" +
+                     "00000010  41 41 41<41>                                      AAAA", str)
+
+        # Past the end
+        str = Hex.to_s('AAAAAAAAAAAAAAAAAAAA', offset: 20)
+        assert_equal("00000000  41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA\n" +
+                     "00000010  41 41 41 41                                       AAAA", str)
+
+        # Total length a multiple of 16, start
+        str = Hex.to_s('AAAAAAAAAAAAAAAA', offset: 0)
+        assert_equal("00000000 <41>41 41 41 41 41 41 41 41 41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA", str)
+
+        # Total length a multiple of 16, middle
+        str = Hex.to_s('AAAAAAAAAAAAAAAA', offset: 8)
+        assert_equal("00000000  41 41 41 41 41 41 41 41<41>41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA", str)
+
+        # Total length a multiple of 16, end
+        str = Hex.to_s('AAAAAAAAAAAAAAAA', offset: 15)
+        assert_equal("00000000  41 41 41 41 41 41 41 41 41 41 41 41 41 41 41<41>  AAAAAAAAAAAAAAAA", str)
+
+        # Total length a multiple of 16, off-the-end
+        str = Hex.to_s('AAAAAAAAAAAAAAAA', offset: 16)
+        assert_equal("00000000  41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41   AAAAAAAAAAAAAAAA", str)
+
+      end
     end
   end
 end

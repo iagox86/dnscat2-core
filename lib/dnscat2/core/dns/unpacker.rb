@@ -15,6 +15,7 @@
 
 require 'dnscat2/core/dns/dns_exception'
 require 'dnscat2/core/dns/constants'
+require 'dnscat2/core/libs/hex'
 
 module DNSer
   class Unpacker
@@ -115,6 +116,11 @@ module DNSer
       end
 
       return segments.join('.')
+    end
+
+    public
+    def to_s()
+      return Dnscat2::Core::Hex.to_s(@data, offset: @offset)
     end
   end
 end
