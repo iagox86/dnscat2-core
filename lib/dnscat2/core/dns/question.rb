@@ -20,7 +20,7 @@ module DNSer
       @cls  = cls
     end
 
-    def self.parse(unpacker)
+    def self.unpack(unpacker)
       name = unpacker.unpack_name()
       type, cls = unpacker.unpack("nn")
 

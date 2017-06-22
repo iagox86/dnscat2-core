@@ -34,7 +34,7 @@ module DNSer
       end
     end
 
-    def self.parse(unpacker)
+    def self.unpack(unpacker)
       length = unpacker.unpack_one('n')
       if length != 4
         raise(FormatException, "Invalid A record!")
@@ -61,7 +61,7 @@ module DNSer
       @name = name
     end
 
-    def self.parse(unpacker)
+    def self.unpack(unpacker)
       # We don't really need the name for anything, so just discard it
       unpacker.unpack('n')
 
@@ -87,7 +87,7 @@ module DNSer
       @name = name
     end
 
-    def self.parse(unpacker)
+    def self.unpack(unpacker)
       # We don't really need the name for anything, so just discard it
       unpacker.unpack('n')
 
@@ -118,7 +118,7 @@ module DNSer
       @ttl = ttl
     end
 
-    def self.parse(unpacker)
+    def self.unpack(unpacker)
       length = unpacker.unpack_one('n')
       if length < 22
         raise(FormatException, "Invalid SOA record")
@@ -163,7 +163,7 @@ module DNSer
       @preference = preference
     end
 
-    def self.parse(unpacker)
+    def self.unpack(unpacker)
       length = unpacker.unpack_one('n')
       if length < 3
         raise(FormatException, "Invalid MX record")
@@ -195,7 +195,7 @@ module DNSer
       @data = data
     end
 
-    def self.parse(unpacker)
+    def self.unpack(unpacker)
       length = unpacker.unpack_one('n')
       if length < 1
         raise(FormatException, "Invalid TXT record")
@@ -242,7 +242,7 @@ module DNSer
       end
     end
 
-    def self.parse(unpacker)
+    def self.unpack(unpacker)
       length = unpacker.unpack_one('n')
       if length != 16
         raise(FormatException, "Invalid AAAA record")
@@ -271,7 +271,7 @@ module DNSer
       @data = data
     end
 
-    def self.parse(unpacker, type)
+    def self.unpack(unpacker, type)
       length = unpacker.unpack_one('n')
       data = unpacker.unpack_one("a#{length}")
       return self.new(type: type, data: data)

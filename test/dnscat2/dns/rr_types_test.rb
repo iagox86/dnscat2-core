@@ -19,16 +19,16 @@ module DNSer
       assert_equal("\x00\x04\x01\x02\x03\x04", packer.get())
     end
 
-    def test_parse_a()
+    def test_unpack_a()
       unpacker = Unpacker.new("\x00\x04ABCD")
-      record = A.parse(unpacker)
+      record = A.unpack(unpacker)
       assert_equal(IPAddr.new('65.66.67.68'), record.address)
     end
 
-    def test_parse_invalid_A()
+    def test_unpack_invalid_A()
       unpacker = Unpacker.new("\x00\x05ABCD")
       assert_raises(FormatException) do
-        A.parse(unpacker)
+        A.unpack(unpacker)
       end
     end
 
@@ -60,9 +60,9 @@ module DNSer
       assert_equal("\x00\x0a\x04test\x03com\x00", packer.get())
     end
 
-    def test_parse_ns()
+    def test_unpack_ns()
       unpacker = Unpacker.new("\x00\x0a\x04test\x03com\x00")
-      record = NS.parse(unpacker)
+      record = NS.unpack(unpacker)
       assert_equal('test.com', record.name)
     end
   end
@@ -82,9 +82,9 @@ module DNSer
       assert_equal("\x00\x0a\x04test\x03com\x00", packer.get())
     end
 
-    def test_parse_cname()
+    def test_unpack_cname()
       unpacker = Unpacker.new("\x00\x0a\x04test\x03com\x00")
-      record = CNAME.parse(unpacker)
+      record = CNAME.unpack(unpacker)
       assert_equal('test.com', record.name)
     end
   end
@@ -133,7 +133,7 @@ module DNSer
       assert_equal(expected, packer.get())
     end
 
-    def test_parse_soa()
+    def test_unpack_soa()
       unpacker = Unpacker.new("\x00\x24" +
         "\x04test\x03com\x00" +
         "\x05other\xc0\x02" +
@@ -143,7 +143,7 @@ module DNSer
         "\x4d\x4e\x4f\x50" +
         "\x51\x52\x53\x54"
       )
-      record = SOA.parse(unpacker)
+      record = SOA.unpack(unpacker)
       assert_equal('test.com', record.primary)
       assert_equal('other.test.com', record.responsible)
       assert_equal(0x41424344, record.serial)
@@ -170,9 +170,9 @@ module DNSer
       assert_equal("\x00\x0c\x04test\x03com\x00\x00\x0a", packer.get())
     end
 
-    def test_parse_mx()
+    def test_unpack_mx()
       unpacker = Unpacker.new("\x00\x0c\x00\x0a\x04test\x03com\x00")
-      record = MX.parse(unpacker)
+      record = MX.unpack(unpacker)
       assert_equal('test.com', record.name)
       assert_equal(10, record.preference)
     end
@@ -193,9 +193,9 @@ module DNSer
       assert_equal("\x00\x0d\x0cHello world!", packer.get())
     end
 
-    def test_parse_txt()
+    def test_unpack_txt()
       unpacker = Unpacker.new("\x00\x0d\x0cHello world!")
-      record = TXT.parse(unpacker)
+      record = TXT.unpack(unpacker)
       assert_equal('Hello world!', record.data)
     end
   end
@@ -215,9 +215,9 @@ module DNSer
       assert_equal("\x00\x10\x20\x01\x0d\xb8\x85\xa3\x00\x00\x00\x00\x8a\x2e\x03\x70\x73\x34", packer.get())
     end
 
-    def test_parse_aaaa()
+    def test_unpack_aaaa()
       unpacker = Unpacker.new("\x00\x10\x20\x01\x0d\xb8\x85\xa3\x00\x00\x00\x00\x8a\x2e\x03\x70\x73\x34")
-      record = AAAA.parse(unpacker)
+      record = AAAA.unpack(unpacker)
       assert_equal(IPAddr.new('2001:db8:85a3::8a2e:370:7334'), record.address)
     end
 
@@ -250,9 +250,9 @@ module DNSer
       assert_equal("\x00\x06hihihi", packer.get())
     end
 
-    def test_parse_rrunknown()
+    def test_unpack_rrunknown()
       unpacker = Unpacker.new("\x00\x06hihihi")
-      record = RRUnknown.parse(unpacker, 0x1337)
+      record = RRUnknown.unpack(unpacker, 0x1337)
       assert_equal(0x1337, record.type)
       assert_equal('hihihi', record.data)
     end

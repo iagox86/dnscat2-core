@@ -22,7 +22,7 @@ module DNSer
 
       # Unpack
       unpacker = Unpacker.new(packer.get())
-      question = Question.parse(unpacker)
+      question = Question.unpack(unpacker)
       assert_equal('test.com', question.name)
       assert_equal(TYPE_A, question.type)
       assert_equal(CLS_IN, question.cls)

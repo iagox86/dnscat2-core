@@ -68,7 +68,7 @@ module DNSer
 
           timeout(timeout) do
             response = s.recv(65536)
-            proc.call(DNSer::Packet.parse(response))
+            proc.call(DNSer::Packet.unpack(response))
           end
         rescue Timeout::Error
           proc.call(nil)

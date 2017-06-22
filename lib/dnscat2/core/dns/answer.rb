@@ -23,31 +23,31 @@ module DNSer
       @rr   = rr
     end
 
-    def Answer.parse(unpacker)
+    def self.unpack(unpacker)
       name = unpacker.unpack_name()
       type, cls, ttl, rr_length = unpacker.unpack("nnNn")
 
       case type
       when TYPE_A
-        rr = A.parse(data)
+        rr = A.unpack(data)
       when TYPE_NS
-        rr = NS.parse(data)
+        rr = NS.unpack(data)
       when TYPE_CNAME
-        rr = CNAME.parse(data)
+        rr = CNAME.unpack(data)
       when TYPE_SOA
-        rr = SOA.parse(data)
+        rr = SOA.unpack(data)
       when TYPE_MX
-        rr = MX.parse(data)
+        rr = MX.unpack(data)
       when TYPE_TXT
-        rr = TXT.parse(data)
+        rr = TXT.unpack(data)
       when TYPE_AAAA
-        rr = AAAA.parse(data)
+        rr = AAAA.unpack(data)
       else
         puts("Warning: Unknown record type: #{type}")
-        rr = RRUnknown.parse(type, data, rr_length)
+        rr = RRUnknown.unpack(type, data, rr_length)
       end
 
-      return Answer.new(
+      return self.new(
         name: name,
         type: type,
         cls: cls,

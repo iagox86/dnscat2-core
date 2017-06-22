@@ -23,7 +23,7 @@ module DNSer
         @cls  = cls
       end
 
-      def Question.parse(data)
+      def Question.unpack(data)
         name = data.unpack_name()
         type, cls = data.unpack("nn")
 
@@ -105,7 +105,7 @@ module DNSer
         return (@name == other.name) && (@type == other.type) && (@cls == other.cls) && (@rr == other.rr)
       end
 
-      def Answer.parse(data)
+      def Answer.unpack(data)
         name = data.unpack_name()
         type, cls, ttl, rr_length = data.unpack("nnNn")
 
@@ -113,22 +113,22 @@ module DNSer
         data.verify_length(rr_length) do
           case type
           when TYPE_A
-            rr = A.parse(data)
+            rr = A.unpack(data)
           when TYPE_NS
-            rr = NS.parse(data)
+            rr = NS.unpack(data)
           when TYPE_CNAME
-            rr = CNAME.parse(data)
+            rr = CNAME.unpack(data)
           when TYPE_SOA
-            rr = SOA.parse(data)
+            rr = SOA.unpack(data)
           when TYPE_MX
-            rr = MX.parse(data)
+            rr = MX.unpack(data)
           when TYPE_TXT
-            rr = TXT.parse(data)
+            rr = TXT.unpack(data)
           when TYPE_AAAA
-            rr = AAAA.parse(data)
+            rr = AAAA.unpack(data)
           else
             puts("Warning: Unknown record type: #{type}")
-            rr = RRUnknown.parse(type, data, rr_length)
+            rr = RRUnknown.unpack(type, data, rr_length)
           end
         end
 
@@ -172,7 +172,7 @@ module DNSer
       @answers << answer
     end
 
-    def Packet.parse(data)
+    def Packet.unpack(data)
       data = DnsUnpacker.new(data)
       trn_id, full_flags, qdcount, ancount, _, _ = data.unpack("nnnnnn")
 
@@ -184,12 +184,12 @@ module DNSer
       packet = Packet.new(trn_id, qr, opcode, flags, rcode)
 
       0.upto(qdcount - 1) do
-        question = Question.parse(data)
+        question = Question.unpack(data)
         packet.add_question(question)
       end
 
       0.upto(ancount - 1) do
-        answer = Answer.parse(data)
+        answer = Answer.unpack(data)
         packet.add_answer(answer)
       end
 

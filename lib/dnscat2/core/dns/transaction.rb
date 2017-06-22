@@ -116,7 +116,7 @@ module DNSer
   end
 
   # This method returns immediately, but spawns a background thread. The thread
-  # will recveive and parse DNS packets, create a transaction, and pass it to
+  # will recveive and unpack DNS packets, create a transaction, and pass it to
   # the caller's block.
   def on_request()
     @thread = Thread.new() do |t|
@@ -125,7 +125,7 @@ module DNSer
           data = @s.recvfrom(65536)
 
           # Data is an array where the first element is the actual data, and the second is the host/port
-          request = DNSer::Packet.parse(data[0])
+          request = DNSer::Packet.unpack(data[0])
 
           # Create a transaction object, which we can use to respond
           transaction = Transaction.new(@s, request, data[1][3], data[1][1], @cache)
