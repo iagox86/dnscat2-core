@@ -1,7 +1,7 @@
 # Encoding: ASCII-8BIT
 require 'test_helper'
 
-require 'dnscat2/core/dns/packer'
+require 'dnscat2/core/dns/packets/packer'
 
 module DNSer
   class PackerTest < ::Test::Unit::TestCase

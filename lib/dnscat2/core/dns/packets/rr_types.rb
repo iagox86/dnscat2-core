@@ -9,10 +9,10 @@
 
 require 'ipaddr'
 
-require 'dnscat2/core/dns/constants'
+require 'dnscat2/core/dns/packets/constants'
 require 'dnscat2/core/dns/dns_exception'
-require 'dnscat2/core/dns/packer'
-require 'dnscat2/core/dns/unpacker'
+require 'dnscat2/core/dns/packets/packer'
+require 'dnscat2/core/dns/packets/unpacker'
 
 module DNSer
   class A

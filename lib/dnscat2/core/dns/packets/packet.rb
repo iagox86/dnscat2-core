@@ -7,13 +7,13 @@
 # See: LICENSE.md
 ##
 
-require 'dnscat2/core/dns/answer'
-require 'dnscat2/core/dns/constants'
 require 'dnscat2/core/dns/dns_exception'
-require 'dnscat2/core/dns/packer'
-require 'dnscat2/core/dns/question'
-require 'dnscat2/core/dns/rr_types'
-require 'dnscat2/core/dns/unpacker'
+require 'dnscat2/core/dns/packets/answer'
+require 'dnscat2/core/dns/packets/constants'
+require 'dnscat2/core/dns/packets/packer'
+require 'dnscat2/core/dns/packets/question'
+require 'dnscat2/core/dns/packets/rr_types'
+require 'dnscat2/core/dns/packets/unpacker'
 
 module DNSer
   class Packet

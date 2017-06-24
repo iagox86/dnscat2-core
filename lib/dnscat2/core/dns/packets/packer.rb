@@ -14,7 +14,7 @@
 ##
 
 require 'dnscat2/core/dns/dns_exception'
-require 'dnscat2/core/dns/constants'
+require 'dnscat2/core/dns/packets/constants'
 
 module DNSer
   class Packer
