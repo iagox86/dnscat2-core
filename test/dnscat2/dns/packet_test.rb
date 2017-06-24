@@ -50,18 +50,26 @@ module DNSer
       assert_equal('google.com', packet.questions[0].name)
       assert_equal(TYPE_A, packet.questions[0].type)
       assert_equal(CLS_IN, packet.questions[0].cls)
+
+      # Test the to_s method while we're at it
+      expected_long = "DNS QUERY: id=0x1337, opcode = OPCODE_QUERY, flags = RD, rcode = :NoError (RCODE_SUCCESS), qdcount = 0x0001, ancount = 0x0000\n" +
+        "    Question: google.com [A IN]"
+      assert_equal(expected_long, packet.to_s())
+
+      expected_brief = "Request for google.com [A IN]"
+      assert_equal(expected_brief, packet.to_s(brief: true))
     end
 
     def test_create_parse_answer()
       packet = Packet.new(
         trn_id: 0x1337,
-        qr: QR_QUERY,
+        qr: QR_RESPONSE,
         opcode: OPCODE_QUERY,
         flags: FLAG_RD,
         rcode: RCODE_SUCCESS,
       )
       assert_equal(0x1337, packet.trn_id)
-      assert_equal(QR_QUERY, packet.qr)
+      assert_equal(QR_RESPONSE, packet.qr)
       assert_equal(OPCODE_QUERY, packet.opcode)
       assert_equal(FLAG_RD, packet.flags)
       assert_equal(RCODE_SUCCESS, packet.rcode)
@@ -115,7 +123,7 @@ module DNSer
       assert_equal(10, packet.answers[1].rr.preference)
 
       expected = "\x13\x37" + # trn_id
-        "\x01\x00" + # Flags
+        "\x81\x00" + # Flags
         "\x00\x01" + # qdcount
         "\x00\x02" + # ancount
         "\x00\x00" + # nscount
@@ -147,7 +155,7 @@ module DNSer
       packet = Packet.parse(packet.to_bytes)
 
       assert_equal(0x1337, packet.trn_id)
-      assert_equal(QR_QUERY, packet.qr)
+      assert_equal(QR_RESPONSE, packet.qr)
       assert_equal(OPCODE_QUERY, packet.opcode)
       assert_equal(FLAG_RD, packet.flags)
       assert_equal(RCODE_SUCCESS, packet.rcode)
@@ -165,6 +173,24 @@ module DNSer
       assert_equal(0x12345678, packet.answers[1].ttl)
       assert_equal('mail.google.com', packet.answers[1].rr.name)
       assert_equal(10, packet.answers[1].rr.preference)
+
+      expected_long = "DNS RESPONSE: id=0x1337, opcode = OPCODE_QUERY, flags = RD, rcode = :NoError (RCODE_SUCCESS), qdcount = 0x0001, ancount = 0x0002\n" +
+        "    Question: google.com [A IN]\n" +
+        "    Answer: google.com 305419896 [A IN] 1.2.3.4 [A]\n" +
+        "    Answer: google.com 305419896 [MX IN] 10 mail.google.com [MX]"
+      assert_equal(expected_long, packet.to_s())
+
+      expected_brief = "Response for google.com [A IN]: google.com 305419896 [A IN] 1.2.3.4 [A] (and 1 others)"
+      assert_equal(expected_brief, packet.to_s(brief: true))
+    end
+
+    def test_parse_error()
+    end
+
+    def test_create_response()
+    end
+
+    def test_create_error_response()
     end
   end
 end

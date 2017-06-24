@@ -135,7 +135,7 @@ module DNSer
       return packer.get()
     end
 
-    def to_s(brief = false)
+    def to_s(brief:false)
       if(brief)
         question = @questions[0] || '<unknown>'
 
@@ -148,21 +148,34 @@ module DNSer
           return "Request for #{question}"
         else
           if(@answers.length == 0)
-            return "Response for #{question}: n/a"
+            return "Response for %s: n/a" % question.to_s
           else
-            return "Response for #{question}: #{@answers[0]} (and #{@answers.length - 1} others)"
+            return "Response for %s: %s (and %d others)" % [
+              question.to_s(),
+              @answers[0].to_s(),
+              @answers.length - 1,
+            ]
           end
         end
       end
 
-      results = ["DNS #{QRS[@qr] || "unknown"}: id=#{@trn_id}, opcode=#{OPCODES[@opcode]}, flags=#{Packet.FLAGS(@flags)}, rcode=#{RCODES[@rcode] || "unknown"}, qdcount=#{@questions.length}, ancount=#{@answers.length}"]
+      results = []
+      results << "DNS %s: id=0x%04x, opcode = %s, flags = %s, rcode = %s, qdcount = 0x%04x, ancount = 0x%04x" % [
+        QRS[@qr] || "unknown",
+        @trn_id,
+        OPCODES[@opcode] || "unknown opcode",
+        DNSer::FLAGS(@flags),
+        RCODES[@rcode] || "unknown",
+        @questions.length,
+        @answers.length,
+      ]
 
       @questions.each do |q|
-        results << "    Question: #{q}"
+        results << "    Question: %s" % q.to_s()
       end
 
       @answers.each do |a|
-        results << "    Answer: #{a}"
+        results << "    Answer: %s" % a.to_s()
       end
 
       return results.join("\n")
