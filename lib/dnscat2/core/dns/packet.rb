@@ -81,7 +81,7 @@ module DNSer
       return packet
     end
 
-    def answer(question: nil, answers:[])
+    def answer(answers:[], question:nil)
       question = question || @questions[0]
 
       return Packet.new(
@@ -95,14 +95,16 @@ module DNSer
       )
     end
 
-    def error(rcode:)
+    def error(rcode:, question:nil)
+      question = question || @questions[0]
+
       return Packet.new(
         trn_id: @trn_id,
         qr: QR_RESPONSE,
         opcode: OPCODE_QUERY,
         flags: FLAG_RD | FLAG_RA,
         rcode: rcode,
-        questions: [],
+        questions: [question],
         answers: [],
       )
     end
