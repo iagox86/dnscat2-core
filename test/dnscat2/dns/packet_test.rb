@@ -10,13 +10,13 @@ module DNSer
         trn_id: 0x1337,
         qr: QR_QUERY,
         opcode: OPCODE_QUERY,
-        flags: FLAG_RD,
+        flags: FLAG_RD | FLAG_AA | FLAG_RA | FLAG_TC,
         rcode: RCODE_SUCCESS,
       )
       assert_equal(0x1337, packet.trn_id)
       assert_equal(QR_QUERY, packet.qr)
       assert_equal(OPCODE_QUERY, packet.opcode)
-      assert_equal(FLAG_RD, packet.flags)
+      assert_equal(FLAG_RD | FLAG_AA | FLAG_RA | FLAG_TC, packet.flags)
       assert_equal(RCODE_SUCCESS, packet.rcode)
 
       packet.add_question(
@@ -31,7 +31,7 @@ module DNSer
       assert_equal(CLS_IN, packet.questions[0].cls)
 
       expected = "\x13\x37" + # trn_id
-        "\x01\x00" + # Flags
+        "\x07\x80" + # Flags
         "\x00\x01" + # qdcount
         "\x00\x00" + # ancount
         "\x00\x00" + # nscount
@@ -45,14 +45,14 @@ module DNSer
       assert_equal(0x1337, packet.trn_id)
       assert_equal(QR_QUERY, packet.qr)
       assert_equal(OPCODE_QUERY, packet.opcode)
-      assert_equal(FLAG_RD, packet.flags)
+      assert_equal(FLAG_RD | FLAG_AA | FLAG_RA | FLAG_TC, packet.flags)
       assert_equal(RCODE_SUCCESS, packet.rcode)
       assert_equal('google.com', packet.questions[0].name)
       assert_equal(TYPE_A, packet.questions[0].type)
       assert_equal(CLS_IN, packet.questions[0].cls)
 
       # Test the to_s method while we're at it
-      expected_long = "DNS QUERY: id=0x1337, opcode = OPCODE_QUERY, flags = RD, rcode = :NoError (RCODE_SUCCESS), qdcount = 0x0001, ancount = 0x0000\n" +
+      expected_long = "DNS QUERY: id=0x1337, opcode = OPCODE_QUERY, flags = AA|TC|RD|RA, rcode = :NoError (RCODE_SUCCESS), qdcount = 0x0001, ancount = 0x0000\n" +
         "    Question: google.com [A IN]"
       assert_equal(expected_long, packet.to_s())
 
@@ -401,6 +401,16 @@ module DNSer
       assert_equal('skullsecurity.org', response.questions[0].name)
       assert_equal(TYPE_A, response.questions[0].type)
       assert_equal(CLS_IN, response.questions[0].cls)
+    end
+
+    def test_asserts()
+      packet = Packet.new(trn_id:0x1337, qr:QR_QUERY, opcode:OPCODE_QUERY, flags:FLAG_RD, rcode:RCODE_SUCCESS, questions:[], answers:[])
+      assert_raises(DnsException) do
+        packet.add_question("hi")
+      end
+      assert_raises(DnsException) do
+        packet.add_answer("hi")
+      end
     end
   end
 end

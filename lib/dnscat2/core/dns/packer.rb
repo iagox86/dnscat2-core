@@ -93,10 +93,5 @@ module DNSer
     def get()
       return @data
     end
-
-    public
-    def length()
-      return @data.length
-    end
   end
 end
