@@ -82,4 +82,65 @@ module DNSer
       end
     end
   end
+
+  # Create a new DNSer and listen on the given host/port. This will throw an
+  # exception if we aren't allowed to bind to the given port.
+  def initialize(host, port)
+    @s = UDPSocket.new()
+    @s.bind(host, port)
+    @thread = nil
+  end
+
+  # This method returns immediately, but spawns a background thread. The thread
+  # will receive and unpack DNS packets, create a transaction, and pass it to
+  # the caller's block.
+  def on_request()
+    @thread = Thread.new() do |t|
+      begin
+        loop do
+          data = @s.recvfrom(65536)
+
+          # Data is an array where the first element is the actual data, and the second is the host/port
+          request = DNSer::Packet.unpack(data[0])
+
+          # Create a transaction object, which we can use to respond
+          transaction = Transaction.new(@s, request, data[1][3], data[1][1])
+
+          if(!transaction.sent)
+            begin
+              proc.call(transaction)
+            rescue StandardError => e
+              puts("Caught an error: #{e}")
+              puts(e.backtrace())
+              transaction.reply!(transaction.response_template({:rcode => DNSer::Packet::RCODE_SERVER_FAILURE}))
+            end
+          end
+        end
+      ensure
+        @s.close
+      end
+    end
+  end
+
+  # Kill the listener
+  def stop()
+    if(@thread.nil?)
+      puts("Tried to stop a listener that wasn't listening!")
+      return
+    end
+
+    @thread.kill()
+    @thread = nil
+  end
+
+  # After calling on_request(), this can be called to halt the program's
+  # execution until the thread is stopped.
+  def wait()
+    if(@thread.nil?)
+      puts("Tried to wait on a DNSer instance that wasn't listening!")
+      return
+    end
+
+    @thread.join()
+  end
 end
