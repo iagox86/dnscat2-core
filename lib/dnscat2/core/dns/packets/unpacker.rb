@@ -13,9 +13,10 @@
 # of the packet) can be trivially handled.
 ##
 
+require 'hexhelper'
+
 require 'dnscat2/core/dns/dns_exception'
 require 'dnscat2/core/dns/packets/constants'
-require 'dnscat2/core/libs/hex'
 
 module DNSer
   class Unpacker
@@ -120,7 +121,7 @@ module DNSer
 
     public
     def to_s()
-      return Dnscat2::Core::Hex.to_s(@data, offset: @offset)
+      return HexHelper::to_s(@data, offset: @offset)
     end
   end
 end

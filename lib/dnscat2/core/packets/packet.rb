@@ -9,8 +9,9 @@
 # Builds and parses dnscat2 packets.
 ##
 
+require 'hexhelper'
+
 require 'dnscat2/core/libs/dnscat_exception'
-require 'dnscat2/core/libs/hex'
 require 'dnscat2/core/packets/enc_packet'
 require 'dnscat2/core/packets/fin_packet'
 require 'dnscat2/core/packets/msg_packet'
