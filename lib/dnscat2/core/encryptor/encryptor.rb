@@ -5,6 +5,51 @@
 #
 # See: LICENSE.md
 #
+# This class implements the core of the dnscat2 encryption!
+#
+# To use this class, create a new instance with a pre-shared secret (if there's
+# no shared secret, a random string is fine - just long as it's reasonably
+# unguessable.
+#
+# Then, when the client sends their public keys, call
+# `encryptor.set_their_public_key()` with their public key x and y values as
+# integers. This causes a new private key to be generated, and returns the
+# associated public keys that can be sent to the client.
+#
+# After that, it's possible to optionally call `set_their_authenticator`() with
+# the client's authenticator, which verifies that they have the same pre-shared
+# secret. It's possible to continue without doing this, but most privacy
+# guarantees are lost against an active attacker.
+#
+# Alternatively, the user can manually authenticate a connection using a short
+# authentication string, which is a set of 6 English words from a set of 256,
+# which adds 56 bits of entropy that an attacker would have to break in real-
+# time. Once that's done, `authenticate!()` can be called to mark the
+# connection as manually authenticated.
+#
+# TODO: Disallow unauthenticated connections from sending or receiving data
+#
+# Once the connection is authenticated (or not), then the function
+# `decrypt_and_encrypt()` will attempt to decrypt the data passed to it.
+# The data is a full (header + body) dnscat2 encrypted packet. The packet has
+# been encrypted and signed. The signature is verified, the nonce is verified
+# not to be an old value, and the packet is decrypted.
+#
+# The decrypted packet is passed to `decrypt_encrypt_data()`'s block. Whatever
+# the block returns is then encrypted and returned from the function. It can
+# then be put "on the wire".
+#
+# When one of the nonce values gets too high, the connection needs to be
+# renegotiated. If we overflow nonce values past 0xFFFF, it will begin to fail
+# at decrypting anything.
+#
+# This renegotiation must be initiated by the client, and is as simple as
+# sending a new public key (re-using the same public key causes an error) and
+# passing that public key into `set_their_public_key()`.
+#
+# Until `decrypt_and_encrypt()` returns, both keys can simultaneously be used.
+# that allows some overlap between keys. As soon as the new key is successfully
+# used, the old key is wiped out.
 ##
 
 require 'ecdsa'
@@ -38,7 +83,7 @@ module Dnscat2
 
           # Start with encryption turned off
           @keys = {
-            # TODO: When are the nonces actually changed?
+            # TODO: When is my_nonce actually changed?
             :my_nonce            => -1,
             :their_nonce         => -1,
             :my_private_key      => nil,
@@ -129,6 +174,8 @@ module Dnscat2
           @keys[:their_mac_key]       = _create_key("client_mac_key")
           @keys[:my_write_key]        = _create_key("server_write_key")
           @keys[:my_mac_key]          = _create_key("server_mac_key")
+
+          return @keys[:my_public_key].x, @keys[:my_public_key].y
         end
 
         def set_their_authenticator!(their_authenticator)
@@ -145,31 +192,24 @@ module Dnscat2
           @authenticated = true
         end
 
-#        def my_public_key_x()
-#          return @keys[:my_public_key].x
-#        end
-#
-#        def my_public_key_x_s()
-#          return CryptoHelper.bignum_to_binary(@keys[:my_public_key].x)
-#        end
-#
-#        def my_public_key_y()
-#          return @keys[:my_public_key].y
-#        end
-#
-#        def my_public_key_y_s()
-#          return CryptoHelper.bignum_to_binary(@keys[:my_public_key].y)
-#        end
+        def authenticated?()
+          return @authenticated
+        end
 
         # We use this special internal function so we can try decrypting with different keys
         def _decrypt_packet_internal(keys, data)
           # Don't decrypt if we don't have a key set
-          if(@keys[:shared_secret].nil?)
-            return data
-          end
+#          if(@keys[:shared_secret].nil?)
+#            return data
+#          end
 
           # Parse out the important fields
           header, signature, nonce, encrypted_body = data.unpack("a5a6a2a*")
+
+          # Check if it was truncated
+          if(nonce.nil? || nonce.length < 2)
+            raise(Error, "Invalid encrypted packet!")
+          end
 
           # Check the signature
           correct_signature = SHA3::Digest::SHA256.digest(keys[:their_mac_key] + header + nonce + encrypted_body)
@@ -210,6 +250,8 @@ module Dnscat2
         # By doing this as a single operation, we can always be sure that we're encrypting data
         # with the same key the client use to encrypt data
         def decrypt_and_encrypt(d_data)
+          _ensure_shared_secret!()
+
           ## Figure out which key to use
           keys = @keys
           begin
@@ -231,14 +273,6 @@ module Dnscat2
           e_data = yield(d_data)
 
           return _encrypt_packet_internal(keys, e_data)
-        end
-
-        def my_authenticator()
-          return @keys[:my_authenticator]
-        end
-
-        def authenticated?()
-          return @authenticated
         end
 
         def to_s(keys = nil)
@@ -264,7 +298,6 @@ module Dnscat2
 
           return out.join("\n")
         end
-
       end
     end
   end
