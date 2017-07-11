@@ -30,6 +30,9 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_dependency "simplecov"
 
+  spec.add_dependency "ecdsa"
   spec.add_dependency "hexhelper"
   spec.add_dependency "nesser"
+  spec.add_dependency "salsa20"
+  spec.add_dependency "sha3"
 end
