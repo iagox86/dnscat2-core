@@ -1,6 +1,6 @@
 # Encoding: ASCII-8BIT
 
-ENV['testing'] = true
+TESTING = true
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'simplecov'
