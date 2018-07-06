@@ -78,6 +78,8 @@ module Dnscat2
         extend PacketHelper
         attr_reader :subtype, :flags, :body
 
+        TYPE = MESSAGE_TYPE_ENC
+
         def initialize(flags:, body:)
           if body.is_a?(EncPacketInit)
             @subtype = SUBTYPE_INIT
