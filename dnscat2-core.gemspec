@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["iagox86"]
   spec.email         = ["ron-git@skullsecurity.org"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = 'A DNS-tunneling library designed for command and control'
+  spec.description   = 'A DNS-tunneling library designed for command and control'
+  spec.homepage      = "https://github.com/iagox86/dnscat2-core"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
   # delete this section to allow pushing this gem to any host.
@@ -26,13 +26,13 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "bundler", "~> 1.11"
-  spec.add_development_dependency "rake", "~> 10.0"
-  spec.add_dependency "simplecov"
+  spec.add_development_dependency "bundler",   "~> 1.11"
+  spec.add_development_dependency "rake",      "~> 10.0"
+  spec.add_development_dependency "simplecov", "~> 0.14.1"
 
-  spec.add_dependency "ecdsa"
-  spec.add_dependency "hexhelper"
-  spec.add_dependency "nesser"
-  spec.add_dependency "salsa20"
-  spec.add_dependency "sha3"
+  spec.add_dependency "ecdsa",     "~> 1.2.0"
+  spec.add_dependency "hexhelper", "~> 0.0.2"
+  spec.add_dependency "nesser",    "~> 0.0.4"
+  spec.add_dependency "salsa20",   "~> 0.1.2"
+  spec.add_dependency "sha3",      "~> 1.0.1"
 end
