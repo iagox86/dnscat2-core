@@ -19,6 +19,8 @@ module Dnscat2
 
         attr_reader :isn, :name
 
+        TYPE = MESSAGE_TYPE_SYN
+
         def initialize(isn:, name:nil)
           @isn = isn
           @name = name

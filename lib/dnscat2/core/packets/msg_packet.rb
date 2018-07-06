@@ -19,6 +19,8 @@ module Dnscat2
 
         attr_reader :options, :seq, :ack, :data
 
+        TYPE = MESSAGE_TYPE_MSG
+
         def initialize(options:, seq:, ack:, data:)
           @options = options
           @seq = seq

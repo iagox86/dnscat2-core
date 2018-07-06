@@ -19,6 +19,8 @@ module Dnscat2
 
         attr_reader :options, :reason
 
+        TYPE = MESSAGE_TYPE_FIN
+
         def initialize(options:, reason:)
           @options = options
           @reason = reason

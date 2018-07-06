@@ -24,21 +24,13 @@ module Dnscat2
     module Packets
       class Packet
         extend PacketHelper
-        attr_reader :packet_id, :type, :session_id, :body
+        attr_reader :packet_id, :session_id, :body
 
         private
         def initialize(packet_id:nil, session_id:, body:)
-          if body.is_a?(EncPacket)
-            @type = MESSAGE_TYPE_ENC
-          elsif body.is_a?(FinPacket)
-            @type = MESSAGE_TYPE_FIN
-          elsif body.is_a?(MsgPacket)
-            @type = MESSAGE_TYPE_MSG
-          elsif body.is_a?(SynPacket)
-            @type = MESSAGE_TYPE_SYN
-          elsif body.is_a?(PingPacket)
-            @type = MESSAGE_TYPE_PING
-          else
+          @type = body.class::TYPE
+
+          if(@type.nil?)
             raise(DnscatException, "Unknown message type: %s" % body.class)
           end
 

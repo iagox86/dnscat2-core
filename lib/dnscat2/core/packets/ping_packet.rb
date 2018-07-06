@@ -19,6 +19,8 @@ module Dnscat2
 
         attr_reader :options, :body
 
+        TYPE = MESSAGE_TYPE_PING
+
         def initialize(options:, body:)
           @options = options
           @body = body
