@@ -14,30 +14,32 @@ module Dnscat2
   LOG_LEVEL_ERROR = 3
   LOG_LEVEL_FATAL = 4
 
-  class Logger
-    def initialize(level:LOG_LEVEL_WARNING, sink: ::STDERR)
-      @level = level
-      @sink = sink
-    end
+  module Libs
+    class Logger
+      def initialize(level:LOG_LEVEL_WARNING, sink: ::STDERR)
+        @level = level
+        @sink = sink
+      end
 
-    def info(msg)
-      sink.puts(msg.to_s) if level <= LOG_LEVEL_INFO
-    end
+      def info(msg)
+        sink.puts(msg.to_s) if level <= LOG_LEVEL_INFO
+      end
 
-    def log(msg)
-      sink.puts(msg.to_s) if level <= LOG_LEVEL_LOG
-    end
+      def log(msg)
+        sink.puts(msg.to_s) if level <= LOG_LEVEL_LOG
+      end
 
-    def warning(msg)
-      sink.puts(msg.to_s) if level <= LOG_LEVEL_WARNING
-    end
+      def warning(msg)
+        sink.puts(msg.to_s) if level <= LOG_LEVEL_WARNING
+      end
 
-    def error(msg)
-      sink.puts(msg.to_s) if level <= LOG_LEVEL_ERROR
-    end
+      def error(msg)
+        sink.puts(msg.to_s) if level <= LOG_LEVEL_ERROR
+      end
 
-    def fatal(msg)
-      sink.puts(msg.to_s) if level <= LOG_LEVEL_FATAL
+      def fatal(msg)
+        sink.puts(msg.to_s) if level <= LOG_LEVEL_FATAL
+      end
     end
   end
 end

@@ -57,9 +57,9 @@ require 'salsa20'
 require 'securerandom'
 require 'sha3'
 
+require 'dnscat2/core/dnscat_exception'
 require 'dnscat2/core/encryptor/sas'
 require 'dnscat2/core/libs/crypto_helper'
-require 'dnscat2/core/libs/dnscat_exception'
 
 module Dnscat2
   module Core
@@ -109,18 +109,18 @@ module Dnscat2
         def _create_key(key_name)
           _ensure_shared_secret!()
 
-          return SHA3::Digest::SHA256.digest(CryptoHelper.bignum_to_binary(@keys[:shared_secret]) + key_name)
+          return SHA3::Digest::SHA256.digest(Libs::CryptoHelper.bignum_to_binary(@keys[:shared_secret]) + key_name)
         end
 
         def _create_authenticator(name, preshared_secret)
           _ensure_shared_secret!()
 
           return SHA3::Digest::SHA256.digest(name +
-            CryptoHelper.bignum_to_binary(@keys[:shared_secret]) +
-            CryptoHelper.bignum_to_binary(@keys[:their_public_key].x) +
-            CryptoHelper.bignum_to_binary(@keys[:their_public_key].y) +
-            CryptoHelper.bignum_to_binary(@keys[:my_public_key].x) +
-            CryptoHelper.bignum_to_binary(@keys[:my_public_key].y) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:shared_secret]) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:their_public_key].x) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:their_public_key].y) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:my_public_key].x) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:my_public_key].y) +
             preshared_secret
           )
         end
@@ -129,11 +129,11 @@ module Dnscat2
           _ensure_shared_secret!()
 
           return SAS.get_sas(
-            CryptoHelper.bignum_to_binary(@keys[:shared_secret]) +
-            CryptoHelper.bignum_to_binary(@keys[:their_public_key].x) +
-            CryptoHelper.bignum_to_binary(@keys[:their_public_key].y) +
-            CryptoHelper.bignum_to_binary(@keys[:my_public_key].x) +
-            CryptoHelper.bignum_to_binary(@keys[:my_public_key].y)
+            Libs::CryptoHelper.bignum_to_binary(@keys[:shared_secret]) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:their_public_key].x) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:their_public_key].y) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:my_public_key].x) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:my_public_key].y)
           )
         end
 
@@ -279,12 +279,12 @@ module Dnscat2
           keys = keys || @keys
 
           out = []
-          out << "My private key:       #{CryptoHelper.bignum_to_text(@keys[:my_private_key])}"
-          out << "My public key [x]:    #{CryptoHelper.bignum_to_text(@keys[:my_public_key].x)}"
-          out << "My public key [y]:    #{CryptoHelper.bignum_to_text(@keys[:my_public_key].y)}"
-          out << "Their public key [x]: #{CryptoHelper.bignum_to_text(@keys[:their_public_key].x)}"
-          out << "Their public key [y]: #{CryptoHelper.bignum_to_text(@keys[:their_public_key].y)}"
-          out << "Shared secret:        #{CryptoHelper.bignum_to_text(@keys[:shared_secret])}"
+          out << "My private key:       #{Libs::CryptoHelper.bignum_to_text(@keys[:my_private_key])}"
+          out << "My public key [x]:    #{Libs::CryptoHelper.bignum_to_text(@keys[:my_public_key].x)}"
+          out << "My public key [y]:    #{Libs::CryptoHelper.bignum_to_text(@keys[:my_public_key].y)}"
+          out << "Their public key [x]: #{Libs::CryptoHelper.bignum_to_text(@keys[:their_public_key].x)}"
+          out << "Their public key [y]: #{Libs::CryptoHelper.bignum_to_text(@keys[:their_public_key].y)}"
+          out << "Shared secret:        #{Libs::CryptoHelper.bignum_to_text(@keys[:shared_secret])}"
           out << ""
           out << "Their authenticator:  #{@keys[:their_authenticator].unpack("H*").pop()}"
           out << "My authenticator:     #{@keys[:my_authenticator].unpack("H*").pop()}"

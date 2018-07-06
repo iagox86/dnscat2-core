@@ -9,7 +9,7 @@
 # Helper functions for dnscat2 packets.
 ##
 
-require 'dnscat2/core/libs/dnscat_exception'
+require 'dnscat2/core/dnscat_exception'
 
 module Dnscat2
   module Core
