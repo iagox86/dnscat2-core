@@ -7,6 +7,8 @@
 # See: LICENSE.md
 ##
 
+require 'singlogger'
+
 require 'dnscat2/core/packets/packet_constants'
 require 'dnscat2/core/packets/packet_helper'
 
@@ -22,11 +24,16 @@ module Dnscat2
         TYPE = MESSAGE_TYPE_SYN
 
         def initialize(isn:, name:nil)
+          @l = SingLogger.instance
+          @l.debug("SynPacket: New instance! isn = #{isn}, name = #{name}")
+
           @isn = isn
           @name = name
         end
 
         def self.parse(data)
+          SingLogger.instance.debug("SynPacket: Parsing #{data.length} bytes")
+
           # Body
           # (uint16_t) initial sequence number
           # (uint16_t) options

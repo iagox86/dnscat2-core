@@ -55,11 +55,12 @@
 require 'ecdsa'
 require 'salsa20'
 require 'securerandom'
+require 'singlogger'
 require 'sha3'
 
+require 'dnscat2/core/dnscat_exception'
 require 'dnscat2/core/encryptor/sas'
 require 'dnscat2/core/libs/crypto_helper'
-require 'dnscat2/core/libs/dnscat_exception'
 
 module Dnscat2
   module Core
@@ -76,6 +77,10 @@ module Dnscat2
         ECDH_GROUP = ECDSA::Group::Nistp256
 
         def initialize(preshared_secret:)
+          @l = SingLogger.instance()
+
+          @l.debug("Encryptor: New instance! PSK = `#{preshared_secret}`")
+
           @preshared_secret = preshared_secret
 
           # Start off as unauthenticated
@@ -107,20 +112,24 @@ module Dnscat2
         end
 
         def _create_key(key_name)
+          @l.debug("Encryptor: creating new key: #{key_name}")
+
           _ensure_shared_secret!()
 
-          return SHA3::Digest::SHA256.digest(CryptoHelper.bignum_to_binary(@keys[:shared_secret]) + key_name)
+          return SHA3::Digest::SHA256.digest(Libs::CryptoHelper.bignum_to_binary(@keys[:shared_secret]) + key_name)
         end
 
         def _create_authenticator(name, preshared_secret)
+          @l.debug("Encryptor: creating authenticator: #{name}")
+
           _ensure_shared_secret!()
 
           return SHA3::Digest::SHA256.digest(name +
-            CryptoHelper.bignum_to_binary(@keys[:shared_secret]) +
-            CryptoHelper.bignum_to_binary(@keys[:their_public_key].x) +
-            CryptoHelper.bignum_to_binary(@keys[:their_public_key].y) +
-            CryptoHelper.bignum_to_binary(@keys[:my_public_key].x) +
-            CryptoHelper.bignum_to_binary(@keys[:my_public_key].y) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:shared_secret]) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:their_public_key].x) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:their_public_key].y) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:my_public_key].x) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:my_public_key].y) +
             preshared_secret
           )
         end
@@ -129,11 +138,11 @@ module Dnscat2
           _ensure_shared_secret!()
 
           return SAS.get_sas(
-            CryptoHelper.bignum_to_binary(@keys[:shared_secret]) +
-            CryptoHelper.bignum_to_binary(@keys[:their_public_key].x) +
-            CryptoHelper.bignum_to_binary(@keys[:their_public_key].y) +
-            CryptoHelper.bignum_to_binary(@keys[:my_public_key].x) +
-            CryptoHelper.bignum_to_binary(@keys[:my_public_key].y)
+            Libs::CryptoHelper.bignum_to_binary(@keys[:shared_secret]) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:their_public_key].x) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:their_public_key].y) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:my_public_key].x) +
+            Libs::CryptoHelper.bignum_to_binary(@keys[:my_public_key].y)
           )
         end
 
@@ -156,6 +165,7 @@ module Dnscat2
           }
 
           if TESTING
+            @l.error("Encryptor: Setting a fake testing key!")
             @keys[:my_private_key]      = testing_my_private_key || (1 + SecureRandom.random_number(ECDH_GROUP.order - 1))
           else
             @keys[:my_private_key]      = (1 + SecureRandom.random_number(ECDH_GROUP.order - 1))
@@ -198,6 +208,7 @@ module Dnscat2
 
         # We use this special internal function so we can try decrypting with different keys
         def _decrypt_packet_internal(keys, data)
+          @l.debug("Encryptor: Decrypting a #{data.length}-byte packet")
           # Don't decrypt if we don't have a key set
 #          if(@keys[:shared_secret].nil?)
 #            return data
@@ -231,6 +242,8 @@ module Dnscat2
         end
 
         def _encrypt_packet_internal(keys, data)
+          @l.debug("Encryptor: Encrypting a #{data.length}-byte packet")
+
           # Split the packet into a header and a body
           header, body = data.unpack("a5a*")
 
@@ -279,12 +292,12 @@ module Dnscat2
           keys = keys || @keys
 
           out = []
-          out << "My private key:       #{CryptoHelper.bignum_to_text(@keys[:my_private_key])}"
-          out << "My public key [x]:    #{CryptoHelper.bignum_to_text(@keys[:my_public_key].x)}"
-          out << "My public key [y]:    #{CryptoHelper.bignum_to_text(@keys[:my_public_key].y)}"
-          out << "Their public key [x]: #{CryptoHelper.bignum_to_text(@keys[:their_public_key].x)}"
-          out << "Their public key [y]: #{CryptoHelper.bignum_to_text(@keys[:their_public_key].y)}"
-          out << "Shared secret:        #{CryptoHelper.bignum_to_text(@keys[:shared_secret])}"
+          out << "My private key:       #{Libs::CryptoHelper.bignum_to_text(@keys[:my_private_key])}"
+          out << "My public key [x]:    #{Libs::CryptoHelper.bignum_to_text(@keys[:my_public_key].x)}"
+          out << "My public key [y]:    #{Libs::CryptoHelper.bignum_to_text(@keys[:my_public_key].y)}"
+          out << "Their public key [x]: #{Libs::CryptoHelper.bignum_to_text(@keys[:their_public_key].x)}"
+          out << "Their public key [y]: #{Libs::CryptoHelper.bignum_to_text(@keys[:their_public_key].y)}"
+          out << "Shared secret:        #{Libs::CryptoHelper.bignum_to_text(@keys[:shared_secret])}"
           out << ""
           out << "Their authenticator:  #{@keys[:their_authenticator].unpack("H*").pop()}"
           out << "My authenticator:     #{@keys[:my_authenticator].unpack("H*").pop()}"

@@ -10,8 +10,9 @@
 ##
 
 require 'hexhelper'
+require 'singlogger'
 
-require 'dnscat2/core/libs/dnscat_exception'
+require 'dnscat2/core/dnscat_exception'
 require 'dnscat2/core/packets/enc_packet'
 require 'dnscat2/core/packets/fin_packet'
 require 'dnscat2/core/packets/msg_packet'
@@ -28,6 +29,9 @@ module Dnscat2
 
         private
         def initialize(packet_id:nil, session_id:, body:)
+          @l = SingLogger.instance
+          @l.debug("Packet: New instance! packet_id = #{packet_id}, session_id = #{session_id}, body = #{body}")
+
           @type = body.class::TYPE
 
           if(@type.nil?)
@@ -41,6 +45,8 @@ module Dnscat2
 
         private
         def self.parse_header(data)
+          SingLogger.instance.debug("Packet: Parsing #{data.length} bytes of header (should be 5+)")
+
           verify_length!(data, 5)
 
           # (uint16_t) packet_id
@@ -64,6 +70,8 @@ module Dnscat2
 
         public
         def self.parse(data, options:nil)
+          SingLogger.instance.debug("Packet: Parsing #{data.length} bytes of data (options = #{options})")
+
           packet_id, type, session_id, data = self.parse_header(data)
 
           case type
@@ -87,6 +95,8 @@ module Dnscat2
         end
 
         def self.create_syn(session_id:, isn:, name:nil)
+          SingLogger.instance.debug("Packet: Creating a SYN packet (session_id = #{session_id}, isn = #{isn}, name = #{name})")
+
           return Packet.new(
             session_id: session_id,
             body: SynPacket.new(
@@ -97,6 +107,8 @@ module Dnscat2
         end
 
         def self.create_msg(options:, session_id:, seq:, ack:, data:)
+          SingLogger.instance.debug("Packet: Creating a MSG packet (options = #{options}, session_id = #{session_id}, seq = #{seq}, ack = #{ack}, data = #{data.length} bytes)")
+
           return Packet.new(
             session_id: session_id,
             body: MsgPacket.new(
@@ -109,6 +121,8 @@ module Dnscat2
         end
 
         def self.create_fin(options:, session_id:, reason:)
+          SingLogger.instance.debug("Packet: Creating a FIN packet (options = #{options}, session_id = #{session_id}, reason = #{reason}")
+
           return Packet.new(
             session_id: session_id,
             body: FinPacket.new(
@@ -119,6 +133,8 @@ module Dnscat2
         end
 
         def self.create_ping(options:, ping_id:, body:)
+          SingLogger.instance.debug("Packet: Creating a PING packet (options = #{options}, ping_id = #{ping_id}, body = #{body}")
+
           return Packet.new(
             session_id: ping_id,
             body: PingPacket.new(
@@ -129,6 +145,8 @@ module Dnscat2
         end
 
         def self.create_enc_init(session_id:, public_key_x:, public_key_y:)
+          SingLogger.instance.debug("Packet: Creating a ENC|INIT packet (session_id = #{session_id}, public_key_x = #{public_key_x}, public_key_y = #{public_key_y}")
+
           return Packet.new(
             session_id: session_id,
             body: EncPacket.new(
@@ -142,6 +160,8 @@ module Dnscat2
         end
 
         def self.create_enc_auth(session_id:, authenticator:)
+          SingLogger.instance.debug("Packet: Creating a ENC|AUTH packet (session_id = #{session_id}, authenticator = #{authenticator}")
+
           return Packet.new(
             session_id: session_id,
             body: EncPacket.new(

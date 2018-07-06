@@ -7,6 +7,8 @@
 # See: LICENSE.md
 ##
 
+require 'singlogger'
+
 require 'dnscat2/core/libs/crypto_helper'
 require 'dnscat2/core/packets/packet_constants'
 require 'dnscat2/core/packets/packet_helper'
@@ -19,29 +21,34 @@ module Dnscat2
         attr_reader :public_key_x, :public_key_y
 
         def initialize(public_key_x:, public_key_y:)
+          @l = SingLogger.instance()
+          @l.debug("EncPacketInit: New instance! public_key_x = #{public_key_x}, public_key_y = #{public_key_y}")
+
           @public_key_x = public_key_x
           @public_key_y = public_key_y
         end
 
         def self.parse(data)
+          SingLogger.instance().debug("EncPacketInit: Parsing a #{data.length}-byte packet")
+
           verify_exactly!(data, 64)
           public_key_x, public_key_y = data.unpack("a32a32")
 
           return self.new(
-            public_key_x: CryptoHelper.binary_to_bignum(public_key_x),
-            public_key_y: CryptoHelper.binary_to_bignum(public_key_y),
+            public_key_x: Libs::CryptoHelper.binary_to_bignum(public_key_x),
+            public_key_y: Libs::CryptoHelper.binary_to_bignum(public_key_y),
           )
         end
 
         def to_bytes()
-          public_key_x = CryptoHelper.bignum_to_binary(@public_key_x)
-          public_key_y = CryptoHelper.bignum_to_binary(@public_key_y)
+          public_key_x = Libs::CryptoHelper.bignum_to_binary(@public_key_x)
+          public_key_y = Libs::CryptoHelper.bignum_to_binary(@public_key_y)
 
           return [public_key_x, public_key_y].pack("a32a32")
         end
 
         def to_s()
-          return "[[INIT]] :: pubkey = 0x%s,0x%s" % [CryptoHelper.bignum_to_text(@public_key_x), CryptoHelper.bignum_to_text(@public_key_y)]
+          return "[[INIT]] :: pubkey = 0x%s,0x%s" % [Libs::CryptoHelper.bignum_to_text(@public_key_x), Libs::CryptoHelper.bignum_to_text(@public_key_y)]
         end
       end
 
@@ -50,26 +57,31 @@ module Dnscat2
         attr_reader :authenticator
 
         def initialize(authenticator:)
+          @l = SingLogger.instance()
+          @l.debug("EncPacketAuth: New instance! authenticator = #{authenticator}")
+
           @authenticator = authenticator
         end
 
         def self.parse(data)
+          SingLogger.instance().debug("EncPacketAuth: parsing #{data.length} bytes of data")
+
           verify_exactly!(data, 32)
           authenticator = data.unpack("a32").pop
 
           return self.new(
-            authenticator: CryptoHelper.binary_to_bignum(authenticator),
+            authenticator: Libs::CryptoHelper.binary_to_bignum(authenticator),
           )
         end
 
         def to_bytes()
-          authenticator = CryptoHelper.bignum_to_binary(@authenticator)
+          authenticator = Libs::CryptoHelper.bignum_to_binary(@authenticator)
 
           return [authenticator].pack("a32")
         end
 
         def to_s()
-          return "[[AUTH]] :: authenticator = 0x%s" % [CryptoHelper.bignum_to_text(@authenticator)]
+          return "[[AUTH]] :: authenticator = 0x%s" % [Libs::CryptoHelper.bignum_to_text(@authenticator)]
         end
       end
 
@@ -81,6 +93,9 @@ module Dnscat2
         TYPE = MESSAGE_TYPE_ENC
 
         def initialize(flags:, body:)
+          @l = SingLogger.instance()
+          @l.debug("EncPacket: New instance! flags = #{flags}, body = #{body}")
+
           if body.is_a?(EncPacketInit)
             @subtype = SUBTYPE_INIT
           elsif body.is_a?(EncPacketAuth)
@@ -94,6 +109,8 @@ module Dnscat2
         end
 
         def self.parse(data)
+          SingLogger.instance().debug("EncPacket: parsing #{data.length} bytes of data")
+
           verify_length!(data, 4)
 
           subtype, flags, data = data.unpack("nna*")
