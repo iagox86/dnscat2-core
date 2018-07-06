@@ -12,8 +12,8 @@ module Dnscat2
   module Core
     class CryptoHelper
       def self.bignum_to_binary(bn, size: 32)
-        if(!bn.is_a?(Bignum) and !bn.is_a?(Fixnum))
-          raise(ArgumentError, "Expected: Bignum; received: #{bn.class}")
+        if(!bn.is_a?(::Integer))
+          raise(ArgumentError, "Expected: Integer; received: #{bn.class}")
         end
 
         return [bn.to_s(16).rjust(size*2, "\0")].pack("H*")
