@@ -8,6 +8,9 @@ SimpleCov.start do
   add_filter '/test/'
 end
 
+require 'singlogger'
+SingLogger.set_level(level: ::Logger::FATAL)
+
 class FakeSocket
   attr_reader :out
 

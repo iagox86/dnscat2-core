@@ -7,6 +7,8 @@
 # See: LICENSE.md
 ##
 
+require 'singlogger'
+
 require 'dnscat2/core/packets/packet_constants'
 require 'dnscat2/core/packets/packet_helper'
 
@@ -22,6 +24,9 @@ module Dnscat2
         TYPE = MESSAGE_TYPE_MSG
 
         def initialize(options:, seq:, ack:, data:)
+          @l = SingLogger.instance
+          @l.debug("MsgPacket: New instance! options = #{options}, seq = #{seq}, ack = #{ack}, data = #{data}")
+
           @options = options
           @seq = seq
           @ack = ack
@@ -29,6 +34,8 @@ module Dnscat2
         end
 
         def self.parse(options, data)
+          SingLogger.instance.debug("MsgPacket: Parsing #{data.length} bytes of data! (options = #{options})")
+
           verify_length!(data, 4)
 
           seq, ack, data = data.unpack("nna*")

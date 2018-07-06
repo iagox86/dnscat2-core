@@ -31,10 +31,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "simplecov", "~> 0.14.1"
   spec.add_development_dependency "test-unit", "~> 3.2.8"
 
-
-  spec.add_dependency "ecdsa",     "~> 1.2.0"
-  spec.add_dependency "hexhelper", "~> 0.0.2"
-  spec.add_dependency "nesser",    "~> 0.0.4"
-  spec.add_dependency "salsa20",   "~> 0.1.2"
-  spec.add_dependency "sha3",      "~> 1.0.1"
+  spec.add_dependency "ecdsa",      "~> 1.2.0"
+  spec.add_dependency "hexhelper",  "~> 0.0.2"
+  spec.add_dependency "nesser",     "~> 0.0.4"
+  spec.add_dependency "salsa20",    "~> 0.1.2"
+  spec.add_dependency "sha3",       "~> 1.0.1"
+  spec.add_dependency "singlogger", "~> 0.0.0"
 end

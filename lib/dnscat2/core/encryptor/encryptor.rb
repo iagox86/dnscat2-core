@@ -55,6 +55,7 @@
 require 'ecdsa'
 require 'salsa20'
 require 'securerandom'
+require 'singlogger'
 require 'sha3'
 
 require 'dnscat2/core/dnscat_exception'
@@ -76,6 +77,10 @@ module Dnscat2
         ECDH_GROUP = ECDSA::Group::Nistp256
 
         def initialize(preshared_secret:)
+          @l = SingLogger.instance()
+
+          @l.debug("Encryptor: New instance! PSK = `#{preshared_secret}`")
+
           @preshared_secret = preshared_secret
 
           # Start off as unauthenticated
@@ -107,12 +112,16 @@ module Dnscat2
         end
 
         def _create_key(key_name)
+          @l.debug("Encryptor: creating new key: #{key_name}")
+
           _ensure_shared_secret!()
 
           return SHA3::Digest::SHA256.digest(Libs::CryptoHelper.bignum_to_binary(@keys[:shared_secret]) + key_name)
         end
 
         def _create_authenticator(name, preshared_secret)
+          @l.debug("Encryptor: creating authenticator: #{name}")
+
           _ensure_shared_secret!()
 
           return SHA3::Digest::SHA256.digest(name +
@@ -156,6 +165,7 @@ module Dnscat2
           }
 
           if TESTING
+            @l.error("Encryptor: Setting a fake testing key!")
             @keys[:my_private_key]      = testing_my_private_key || (1 + SecureRandom.random_number(ECDH_GROUP.order - 1))
           else
             @keys[:my_private_key]      = (1 + SecureRandom.random_number(ECDH_GROUP.order - 1))
@@ -198,6 +208,7 @@ module Dnscat2
 
         # We use this special internal function so we can try decrypting with different keys
         def _decrypt_packet_internal(keys, data)
+          @l.debug("Encryptor: Decrypting a #{data.length}-byte packet")
           # Don't decrypt if we don't have a key set
 #          if(@keys[:shared_secret].nil?)
 #            return data
@@ -231,6 +242,8 @@ module Dnscat2
         end
 
         def _encrypt_packet_internal(keys, data)
+          @l.debug("Encryptor: Encrypting a #{data.length}-byte packet")
+
           # Split the packet into a header and a body
           header, body = data.unpack("a5a*")
 

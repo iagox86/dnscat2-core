@@ -7,6 +7,8 @@
 # See: LICENSE.md
 ##
 
+require 'singlogger'
+
 require 'dnscat2/core/libs/crypto_helper'
 require 'dnscat2/core/packets/packet_constants'
 require 'dnscat2/core/packets/packet_helper'
@@ -19,11 +21,16 @@ module Dnscat2
         attr_reader :public_key_x, :public_key_y
 
         def initialize(public_key_x:, public_key_y:)
+          @l = SingLogger.instance()
+          @l.debug("EncPacketInit: New instance! public_key_x = #{public_key_x}, public_key_y = #{public_key_y}")
+
           @public_key_x = public_key_x
           @public_key_y = public_key_y
         end
 
         def self.parse(data)
+          SingLogger.instance().debug("EncPacketInit: Parsing a #{data.length}-byte packet")
+
           verify_exactly!(data, 64)
           public_key_x, public_key_y = data.unpack("a32a32")
 
@@ -50,10 +57,15 @@ module Dnscat2
         attr_reader :authenticator
 
         def initialize(authenticator:)
+          @l = SingLogger.instance()
+          @l.debug("EncPacketAuth: New instance! authenticator = #{authenticator}")
+
           @authenticator = authenticator
         end
 
         def self.parse(data)
+          SingLogger.instance().debug("EncPacketAuth: parsing #{data.length} bytes of data")
+
           verify_exactly!(data, 32)
           authenticator = data.unpack("a32").pop
 
@@ -81,6 +93,9 @@ module Dnscat2
         TYPE = MESSAGE_TYPE_ENC
 
         def initialize(flags:, body:)
+          @l = SingLogger.instance()
+          @l.debug("EncPacket: New instance! flags = #{flags}, body = #{body}")
+
           if body.is_a?(EncPacketInit)
             @subtype = SUBTYPE_INIT
           elsif body.is_a?(EncPacketAuth)
@@ -94,6 +109,8 @@ module Dnscat2
         end
 
         def self.parse(data)
+          SingLogger.instance().debug("EncPacket: parsing #{data.length} bytes of data")
+
           verify_length!(data, 4)
 
           subtype, flags, data = data.unpack("nna*")
