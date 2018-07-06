@@ -13,7 +13,7 @@ module Dnscat2
     class CryptoHelper
       def self.bignum_to_binary(bn, size: 32)
         if(!bn.is_a?(::Integer))
-          raise(ArgumentError, "Expected: Integer; received: #{bn.class}")
+          raise(::ArgumentError, "Expected: Integer; received: #{bn.class}")
         end
 
         return [bn.to_s(16).rjust(size*2, "\0")].pack("H*")
@@ -24,8 +24,8 @@ module Dnscat2
       end
 
       def self.binary_to_bignum(binary)
-        if(!binary.is_a?(String))
-          raise(ArgumentError, "Expected: String; received: #{binary.class}")
+        if(!binary.is_a?(::String))
+          raise(::ArgumentError, "Expected: String; received: #{binary.class}")
         end
 
         return binary.unpack("H*").pop().to_i(16)

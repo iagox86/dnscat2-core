@@ -15,7 +15,7 @@ module Dnscat2
   LOG_LEVEL_FATAL = 4
 
   class Logger
-    def initialize(level:LOG_LEVEL_WARNING, sink: STDERR)
+    def initialize(level:LOG_LEVEL_WARNING, sink: ::STDERR)
       @level = level
       @sink = sink
     end

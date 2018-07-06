@@ -10,7 +10,7 @@
 
 module Dnscat2
   module Core
-    class DnscatException < StandardError
+    class DnscatException < ::StandardError
     end
   end
 end
