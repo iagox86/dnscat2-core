@@ -11,7 +11,7 @@
 
 require 'hexhelper'
 
-require 'dnscat2/core/libs/dnscat_exception'
+require 'dnscat2/core/dnscat_exception'
 require 'dnscat2/core/packets/enc_packet'
 require 'dnscat2/core/packets/fin_packet'
 require 'dnscat2/core/packets/msg_packet'
