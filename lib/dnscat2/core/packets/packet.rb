@@ -24,7 +24,7 @@ module Dnscat2
     module Packets
       class Packet
         extend PacketHelper
-        attr_reader :packet_id, :session_id, :body
+        attr_reader :packet_id, :type, :session_id, :body
 
         private
         def initialize(packet_id:nil, session_id:, body:)
