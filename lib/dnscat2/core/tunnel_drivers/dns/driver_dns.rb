@@ -24,269 +24,253 @@ require 'thread'
 
 require 'dnscat2/core/dnscat_exception'
 
+require 'dnscat2/core/tunnel_drivers/dns/driver_dns_constants'
+require 'dnscat2/core/tunnel_drivers/dns/txt_handler'
+
 module Dnscat2
   module Core
     module TunnelDrivers
-      class DNS
-        NAME = "DNS Listener"
-        MAX_A_RECORDS = 64
-        MAX_AAAA_RECORDS = 16
-        TYPES = {
-          ::Nesser::TYPE_TXT => {
-            :append_domain   => false,
-            :max_length      => 254,
-            :encoder         => Proc.new() do |name|
-               name.unpack("H*").pop
-            end,
-            :create_rr       => Proc.new() do |data|
-            end,
-          },
-          ::Nesser::TYPE_MX => {
-            :append_domain   => true,
-            :max_length      => 63*4 / 2, # Divide by two because we need to encode it
-            :encoder         => Proc.new() do |name|
-               name.unpack("H*").pop.chars.each_slice(63).map(&:join).join(".")
-            end,
-            :create_rr       => Proc.new() do |data|
-            end,
-          },
-          ::Nesser::TYPE_CNAME => {
-            :append_domain   => true,
-            :max_length      => 63*4 / 2, # Divide by two because we need to encode it
-            :encoder         => Proc.new() do |name|
-               name.unpack("H*").pop.chars.each_slice(63).map(&:join).join(".")
-            end,
-            :create_rr       => Proc.new() do |data|
-            end,
-          },
-          ::Nesser::TYPE_A => {
-            :append_domain   => false,
-            :max_length      => (MAX_A_RECORDS * (4-1)) - 1, # Length-prefixed and sequenced
+      module DNS
+        class Driver
+          TYPES = {
+            ::Nesser::TYPE_CNAME => {
+              :append_domain   => true,
+              :max_length      => 63*4 / 2, # Divide by two because we need to encode it
+              :encoder         => Proc.new() do |name|
+                 name.unpack("H*").pop.chars.each_slice(63).map(&:join).join(".")
+              end,
+              :create_rr       => Proc.new() do |data|
+              end,
+            },
+            ::Nesser::TYPE_A => {
+              :append_domain   => false,
+              :max_length      => (MAX_A_RECORDS * (4-1)) - 1, # Length-prefixed and sequenced
 
-            # Encode in length-prefixed dotted-decimal notation
-            :encoder         => Proc.new() do |name|
-              # Starting sequence number
-              i = -1
+              # Encode in length-prefixed dotted-decimal notation
+              :encoder         => Proc.new() do |name|
+                # Starting sequence number
+                i = -1
 
-              # Prepend the length to the name, and break it into groups of three characters
-              (name.length.chr + name).chars.each_slice(3).map(&:join).map do |ip|
-                # Make sure ip is exactly three characters
-                ip = ip.ljust(3, "A")
-                i += 1
-                "%d.%d.%d.%d" % ([i] + ip.bytes.to_a) # Return
+                # Prepend the length to the name, and break it into groups of three characters
+                (name.length.chr + name).chars.each_slice(3).map(&:join).map do |ip|
+                  # Make sure ip is exactly three characters
+                  ip = ip.ljust(3, "A")
+                  i += 1
+                  "%d.%d.%d.%d" % ([i] + ip.bytes.to_a) # Return
+                end
+              end,
+              :create_rr       => Proc.new() do |data|
+              end,
+            },
+            ::Nesser::TYPE_AAAA => {
+              :append_domain   => false,
+              :max_length      => (MAX_AAAA_RECORDS * (16-1)) - 1, # Length-prefixed and sequenced
+
+              # Encode in length-prefixed IPv6 notation
+              :encoder         => Proc.new() do |name|
+                # Starting sequence number
+                i = -1
+
+                # Prepend the length to the string and split it into 15-character blocks
+                (name.length.chr + name).chars.each_slice(15).map(&:join).map do |ip|
+                  # Make sure the ip is exactly 15 characters
+                  ip = ip.ljust(15, "A")
+                  i += 1
+
+                  # Prepend the sequence number to the 15 bytes, break that into
+                  # 2-byte blocks, and encode them in hex
+                  ([i] + ip.bytes.to_a).each_slice(2).map do |octet|
+                    "%04x" % [octet[0] << 8 | octet[1]]
+                  end.join(":") # return
+                end
+              end,
+              :create_rr       => Proc.new() do |data|
+              end,
+            },
+          }
+
+          ##
+          # Determines whether this message is intended for us (it either starts
+          # with one of the 'prefixes' or ends with one of the domains).
+          #
+          # The return is a true/false value, followed by the question with the
+          # extra cruft removed (just the data remaining).
+          ##
+          private
+          def _is_this_message_for_me(name:)
+            # Check for domain first
+            @domains.each do |d|
+              if(name.end_with?(d))
+                @l.debug("TunnelDrivers::DNS: Message is for me, based on domain! #{name}")
+                return nil, d, name[0...-name.length], d
               end
-            end,
-            :create_rr       => Proc.new() do |data|
-            end,
-          },
-          ::Nesser::TYPE_AAAA => {
-            :append_domain   => false,
-            :max_length      => (MAX_AAAA_RECORDS * (16-1)) - 1, # Length-prefixed and sequenced
+            end
 
-            # Encode in length-prefixed IPv6 notation
-            :encoder         => Proc.new() do |name|
-              # Starting sequence number
-              i = -1
-
-              # Prepend the length to the string and split it into 15-character blocks
-              (name.length.chr + name).chars.each_slice(15).map(&:join).map do |ip|
-                # Make sure the ip is exactly 15 characters
-                ip = ip.ljust(15, "A")
-                i += 1
-
-                # Prepend the sequence number to the 15 bytes, break that into
-                # 2-byte blocks, and encode them in hex
-                ([i] + ip.bytes.to_a).each_slice(2).map do |octet|
-                  "%04x" % [octet[0] << 8 | octet[1]]
-                end.join(":") # return
+            # Check for prefix second
+            @prefixes.each do |p|
+              if(name.start_with?(p))
+                @l.debug("TunnelDrivers::DNS: Message is for me, based on prefix! #{name}")
+                return p, nil, name[p.length..-1], p
               end
-            end,
-            :create_rr       => Proc.new() do |data|
-            end,
-          },
-        }
+            end
 
-        ##
-        # Determines whether this message is intended for us (it either starts
-        # with one of the 'prefixes' or ends with one of the domains).
-        #
-        # The return is a true/false value, followed by the question with the
-        # extra cruft removed (just the data remaining).
-        ##
-        private
-        def _is_this_message_for_me(name:)
-          # Check for domain first
-          @domains.each do |d|
-            if(name.end_with?(d))
-              @l.debug("TunnelDrivers::DNS: Message is for me, based on domain! #{name}")
-              return nil, d, name[0...-name.length], d
+            return nil, nil, name
+          end
+
+          private
+          def _decode_name(name:)
+            # Remove periods and tolower
+            name = name.gsub('.', '').downcase
+
+            # Make sure the name's length is sane
+            if((name.length % 2) != 0)
+              raise(DnscatException, "Length of name wasn't a multiple of 2! Weird encoding?")
+            end
+
+            # Make sure the name's charset is sane
+            if(name =~ /[^0-9a-f]/)
+              raise(DnscatException, "Name contained one or more illegal characters!")
+            end
+
+            # Hex-unencode it
+            return [name].pack("H*")
+          end
+
+          private
+          def _handle_question(name:, type:)
+            # Save the original name so we can reply to it
+            original_name = name
+
+            # Either prefix or domain must be set
+            prefix, domain, name = _is_this_message_for_me(name: name)
+
+            if(!prefix && !domain)
+              @l.debug("TunnelDrivers::DNS: Received a message that didn't match our prefix or domains: #{name}")
+              # Return no answers, which will cause an NXDomain to be sent
+              # TODO: Passthrough?
+              return []
+            end
+
+            # Decode the name into data
+            incoming_data = _decode_name(name: name)
+
+            # Get the default max_length - if we need to append a domain, take
+            # that into account
+            max_length = TYPES[type][:max_length]
+            if(TYPES[type][:append_domain])
+              if(!domain.nil?)
+                max_length -= (domain.length + 1) # +1 takes into account the dot
+              else
+                # TODO: We don't really need to add the prefix in the responses -
+                # but that would require a change to the protocol, and I want to
+                # keep this compatible with old clients till I roll out a new
+                # release.
+                max_length -= (prefix.length + 1)
+              end
+            end
+
+            # Feed the controller
+            outgoing_data = @controller.feed(data: incoming_data, max_length: max_length)
+            if(outgoing_data.length > max_length)
+              raise(DnscatException, "The controller returned too much data: #{response.length}, max_length was #{max_length}")
+            end
+
+            # Encode it
+            outgoing_data = TYPES[type][:encoder].call(outgoing_data)
+
+            # Add the domain, if needed
+            if(TYPES[type][:append_domain])
+              if(!domain.nil?)
+                outgoing_data = outgoing_data + '.' + domain
+              else
+                outgoing_data = prefix + '.' + outgoing_data
+              end
+            end
+
+            answer = Nesser::Answer.new(
+              name: original_name,
+              type: type, # See constants.rb for other options
+              cls: Nesser::CLS_IN,
+              ttl: 3600, # TTL doesn't really matter
+              rr: rr,
+            )
+
+            return answer
+          end
+
+          private
+          def _handle_transaction(transaction:)
+            begin
+              @l.debug("TunnelDrivers::DNS Received a message: #{transaction}")
+
+              request = transaction.request
+              if(request.questions.length != 1)
+                raise(DnscatException, "Incoming DNS request had a weird number of questions (expected: 1, it had: #{request.questions.length})")
+              end
+
+              question = request.questions[0]
+              @l.debug("TunnelDrivers::DNS Question = #{question}")
+              type = request.questions[0].type
+              if(TYPES[type].nil?)
+                raise(DnscatException, "Unexpected DNS type received: #{type}")
+              end
+
+              answers = _handle_question(name: question.name, type: type)
+              @l.debug("TunnelDrivers::DNS Answers = #{answers}")
+              if(answers.length == 0)
+                transaction.error!(Nesser::RCODE_NAME_ERROR)
+                return
+              end
+
+            rescue DnscatError => e
+              @l.error("An error occurred processing the DNS request: #{e}")
+              transaction.error!(Nesser::RCODE_SERVER_FAILURE)
+            rescue Exception => e
+              @l.fatal("A serious error occurred processing the DNS request: #{e}")
+              transaction.error!(Nesser::RCODE_SERVER_FAILURE)
             end
           end
 
-          # Check for prefix second
-          @prefixes.each do |p|
-            if(name.start_with?(p))
-              @l.debug("TunnelDrivers::DNS: Message is for me, based on prefix! #{name}")
-              return p, nil, name[p.length..-1], p
+          public
+          def initialize(s:, prefixes:, domains:, controller:, host:"0.0.0.0", port:53)
+            @l = SingLogger.instance()
+            @l.debug("TunnelDrivers::DNS New instance! s = #{s}, prefixes = #{prefixes}, domains = #{domains}, controller = #{controller}, host = #{host}, port = #{port}")
+
+            @prefixes = prefixes
+            @domains = domains
+            @controller = controller
+
+            # TODO: Some concept of settings at this level?
+
+            @mutex = Mutex.new()
+          end
+
+          def start()
+            @mutex.synchronize() do
+              @l.debug("TunnelDrivers::DNS Starting DNS tunnel!")
+
+              if(@nesser)
+                raise(DnscatException, "TunnelDrivers::DNS is already running!")
+              end
+
+              @nesser = Nesser::Nesser.new(s:s, logger: @l, host:host, port:port) do |transaction|
+                _handle_transaction(transaction: transaction)
+              end
             end
           end
 
-          return nil, nil, name
-        end
+          public
+          def stop()
+            @mutex.synchronize() do
+              @l.debug("TunnelDrivers::DNS Stopping DNS tunnel!")
 
-        private
-        def _decode_name(name:)
-          # Remove periods and tolower
-          name = name.gsub('.', '').downcase
+              if(@nesser.nil)
+                raise(DnscatException, "TunnelDrivers::DNS isn't running!")
+              end
 
-          # Make sure the name's length is sane
-          if((name.length % 2) != 0)
-            raise(DnscatException, "Length of name wasn't a multiple of 2! Weird encoding?")
-          end
-
-          # Make sure the name's charset is sane
-          if(name =~ /[^0-9a-f]/)
-            raise(DnscatException, "Name contained one or more illegal characters!")
-          end
-
-          # Hex-unencode it
-          return [name].pack("H*")
-        end
-
-        private
-        def _handle_question(name:, type:)
-          # Save the original name so we can reply to it
-          original_name = name
-
-          # Either prefix or domain must be set
-          prefix, domain, name = _is_this_message_for_me(name: name)
-
-          if(!prefix && !domain)
-            @l.debug("TunnelDrivers::DNS: Received a message that didn't match our prefix or domains: #{name}")
-            # Return no answers, which will cause an NXDomain to be sent
-            # TODO: Passthrough?
-            return []
-          end
-
-          # Decode the name into data
-          incoming_data = _decode_name(name: name)
-
-          # Get the default max_length - if we need to append a domain, take
-          # that into account
-          max_length = TYPES[type][:max_length]
-          if(TYPES[type][:append_domain])
-            if(!domain.nil?)
-              max_length -= (domain.length + 1) # +1 takes into account the dot
-            else
-              # TODO: We don't really need to add the prefix in the responses -
-              # but that would require a change to the protocol, and I want to
-              # keep this compatible with old clients till I roll out a new
-              # release.
-              max_length -= (prefix.length + 1)
+              @nesser.stop()
+              @nesser = nil
             end
-          end
-
-          # Feed the controller
-          outgoing_data = @controller.feed(data: incoming_data, max_length: max_length)
-          if(outgoing_data.length > max_length)
-            raise(DnscatException, "The controller returned too much data: #{response.length}, max_length was #{max_length}")
-          end
-
-          # Encode it
-          outgoing_data = TYPES[type][:encoder].call(outgoing_data)
-
-          # Add the domain, if needed
-          if(TYPES[type][:append_domain])
-            if(!domain.nil?)
-              outgoing_data = outgoing_data + '.' + domain
-            else
-              outgoing_data = prefix + '.' + outgoing_data
-            end
-          end
-
-          answer = Nesser::Answer.new(
-            name: original_name,
-            type: type, # See constants.rb for other options
-            cls: Nesser::CLS_IN,
-            ttl: 3600, # TTL doesn't really matter
-            rr: rr,
-          )
-
-          return answer
-        end
-
-        private
-        def _handle_transaction(transaction:)
-          begin
-            @l.debug("TunnelDrivers::DNS Received a message: #{transaction}")
-
-            request = transaction.request
-            if(request.questions.length != 1)
-              raise(DnscatException, "Incoming DNS request had a weird number of questions (expected: 1, it had: #{request.questions.length})")
-            end
-
-            question = request.questions[0]
-            @l.debug("TunnelDrivers::DNS Question = #{question}")
-            type = request.questions[0].type
-            if(TYPES[type].nil?)
-              raise(DnscatException, "Unexpected DNS type received: #{type}")
-            end
-
-            answers = _handle_question(name: question.name, type: type)
-            @l.debug("TunnelDrivers::DNS Answers = #{answers}")
-            if(answers.length == 0)
-              transaction.error!(Nesser::RCODE_NAME_ERROR)
-              return
-            end
-
-          rescue DnscatError => e
-            @l.error("An error occurred processing the DNS request: #{e}")
-            transaction.error!(Nesser::RCODE_SERVER_FAILURE)
-          rescue Exception => e
-            @l.fatal("A serious error occurred processing the DNS request: #{e}")
-            transaction.error!(Nesser::RCODE_SERVER_FAILURE)
-          end
-        end
-
-        public
-        def initialize(s:, prefixes:, domains:, controller:, host:"0.0.0.0", port:53)
-          @l = SingLogger.instance()
-          @l.debug("TunnelDrivers::DNS New instance! s = #{s}, prefixes = #{prefixes}, domains = #{domains}, controller = #{controller}, host = #{host}, port = #{port}")
-
-          @prefixes = prefixes
-          @domains = domains
-          @controller = controller
-
-          # TODO: Some concept of settings at this level?
-
-          @mutex = Mutex.new()
-        end
-
-        def start()
-          @mutex.synchronize() do
-            @l.debug("TunnelDrivers::DNS Starting DNS tunnel!")
-
-            if(@nesser)
-              raise(DnscatException, "TunnelDrivers::DNS is already running!")
-            end
-
-            @nesser = Nesser::Nesser.new(s:s, logger: @l, host:host, port:port) do |transaction|
-              _handle_transaction(transaction: transaction)
-            end
-          end
-        end
-
-        public
-        def stop()
-          @mutex.synchronize() do
-            @l.debug("TunnelDrivers::DNS Stopping DNS tunnel!")
-
-            if(@nesser.nil)
-              raise(DnscatException, "TunnelDrivers::DNS isn't running!")
-            end
-
-            @nesser.stop()
-            @nesser = nil
           end
         end
       end
