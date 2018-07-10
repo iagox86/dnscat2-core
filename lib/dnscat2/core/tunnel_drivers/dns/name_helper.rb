@@ -32,8 +32,8 @@ module Dnscat2
           public
           def initialize(tag:, domain:, max_subdomain_length: 63, max_subdomain_jitter: 42)
             @l = SingLogger.instance()
-            @tag = tag
-            @domain = domain
+            @tag = tag == '' ? nil : tag
+            @domain = domain == '' ? nil : domain
 
             if(max_subdomain_length < 1 || max_subdomain_length > 63)
               raise(DnscatException, "max_subdomain_length is not sane")
@@ -108,18 +108,18 @@ module Dnscat2
           def encode_name(data:)
             @l.debug("TunnelDrivers::DNS::NameHelper Encoding #{data.length} bytes of data")
 
-            name = []
-            data = data.unpack('H*').pop()
-            while(data && data.length >= @max_subdomain_length)
-              length = ::Kernel::rand((@max_subdomain_length - @max_subdomain_jitter)..@max_subdomain_length)
-              sub, data = data[0..(length - 1)], data[length..-1]
-              name << sub
-            end
-            # Add the last of the data
-            name << data
-
-            name = name.join('.')
-            puts(name)
+#            name = []
+#            data = data.unpack('H*').pop()
+#            while(data && data.length >= @max_subdomain_length)
+#              length = @max_subdomain_length #::Kernel::rand((@max_subdomain_length - @max_subdomain_jitter)..@max_subdomain_length)
+#              sub, data = data[0..(length - 1)], data[length..-1]
+#              name << sub
+#            end
+#            # Add the last of the data
+#            name << data
+#
+#            name = name.join('.')
+            name = data.unpack("H*").pop.chars.each_slice(63).map(&:join).join(".")
 
             # Add the @tag or @domain
             if(@tag)
@@ -128,6 +128,8 @@ module Dnscat2
             if(@domain)
               name = "#{name}.#{@domain}"
             end
+
+            puts(name)
 
             # Always double check that we aren't too big for a DNS packet
             if(name.length > MAX_RR_LENGTH)

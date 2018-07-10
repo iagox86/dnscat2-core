@@ -66,19 +66,23 @@ module Dnscat2
 #              assert_equal(t[:expected], name.gsub(/\./, '')) # Remove periods so jitter doesn't break tests
 #            end
 #          end
-#
-#          def test_push_length_boundary()
-#            1.upto(63) do |i|
-#              n = NameHelper.new(tag: nil, domain: nil, max_subdomain_length: i, max_subdomain_jitter: 0)
-#              n.encode_name(data: ('a' * n.max_length))
-#            end
-#
-#            # Then with jitter
+
+          def test_push_length_boundary()
+            1.upto(63) do |subdomain_length|
+              0.upto(250) do |domain_length|
+                puts("subdomain_length = #{subdomain_length}")
+                puts("domain_length = #{domain_length}")
+                n = NameHelper.new(tag: nil, domain: 'A' * domain_length, max_subdomain_length: subdomain_length, max_subdomain_jitter: 0)
+                n.encode_name(data: ('a' * n.max_length))
+              end
+            end
+
+            # Then with jitter
 #            2.upto(63) do |i|
 #              n = NameHelper.new(tag: nil, domain: nil, max_subdomain_length: i, max_subdomain_jitter: rand(1..i-1))
 #              n.encode_name(data: ('a' * n.max_length))
 #            end
-#          end
+          end
         end
       end
     end
