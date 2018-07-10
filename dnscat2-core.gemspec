@@ -37,4 +37,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "salsa20",    "~> 0.1.2"
   spec.add_dependency "sha3",       "~> 1.0.1"
   spec.add_dependency "singlogger", "~> 0.0.0"
+  spec.add_dependency "base32",     "~> 0.3.2"
 end
