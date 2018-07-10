@@ -79,7 +79,7 @@ module Dnscat2
           def encode_name(data:)
             @l.debug("TunnelDrivers::DNS::NameHelper Encoding #{data.length} bytes of data")
 
-            name = data.unpack("H*").pop.chars.each_slice(63).map(&:join).join(".")
+            name = data.unpack("H*").pop.chars.each_slice(@max_subdomain_length).map(&:join).join(".")
 
             # Add the @tag or @domain
             if(@tag)
