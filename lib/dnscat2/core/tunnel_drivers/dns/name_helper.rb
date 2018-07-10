@@ -46,24 +46,24 @@ module Dnscat2
             @max_subdomain_jitter = max_subdomain_jitter
           end
 
-          private
-          def _find_max(sub_length:, available:)
-            # The math behind this is:
-            # total_length = sub_length * n + (n - 1)
-            # length must be < = available
-            #
-            # TODO: This is an ugly bruteforce solution - find some pretty math
-            # that matches
-            256.step(1, -1) do |i|
-              total_length = (sub_length * i) + (i - 1)
-
-              if(total_length <= MAX_RR_LENGTH)
-                return i
-              end
-            end
-
-            raise(DnscatException, "Couldn't find a work-able length for DNS parameters")
-          end
+#          private
+#          def _find_max(sub_length:, available:)
+#            # The math behind this is:
+#            # total_length = sub_length * n + (n - 1)
+#            # length must be < = available
+#            #
+#            # TODO: This is an ugly bruteforce solution - find some pretty math
+#            # that matches
+#            256.step(1, -1) do |i|
+#              total_length = (sub_length * i) + (i - 1)
+#
+#              if(total_length <= MAX_RR_LENGTH)
+#                return i
+#              end
+#            end
+#
+#            raise(DnscatException, "Couldn't find a work-able length for DNS parameters")
+#          end
 
           private
           def _number_of_periods(sub_length:, available:, extra:)
@@ -87,17 +87,16 @@ module Dnscat2
           def max_length()
             max_total_length = MAX_RR_LENGTH
             if(@tag)
-              max_total_length = max_total_length - @tag.length
+              max_total_length = max_total_length - @tag.length - 1
             end
             if(@domain)
-              max_total_length = max_total_length - @domain.length
+              max_total_length = max_total_length - @domain.length - 1
             end
 
             number_of_periods = _number_of_periods(sub_length: @max_subdomain_length - @max_subdomain_jitter, available: MAX_RR_LENGTH, extra: @tag || @domain)
-            number_of_periods_2 = _find_max(sub_length: @max_subdomain_length - @max_subdomain_jitter, available: max_total_length)
+            #number_of_periods_2 = _find_max(sub_length: @max_subdomain_length - @max_subdomain_jitter, available: max_total_length)
 
-
-            return (max_total_length - number_of_periods) / 2, number_of_periods, number_of_periods_2
+            return (max_total_length - number_of_periods) / 2
           end
 
           ##
