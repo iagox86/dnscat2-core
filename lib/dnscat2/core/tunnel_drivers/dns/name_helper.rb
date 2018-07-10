@@ -25,12 +25,8 @@ module Dnscat2
           # domain: The text that goes after the name
           # max_subdomain_length: The maximum length of a sub-domain name (like
           #  the 'www' of 'www.google.com') - 63 is a safe bet
-          # max_subdomain_jitter: The amount that could be subtracted from
-          #  max_subdomain_length at random - subdomains of 15 bytes =~ the same
-          #  amount of data as 63 bytes, so 42 is a pretty safe jitter that
-          #  doesn't compromise too much on bandwidth
           public
-          def initialize(tag:, domain:, max_subdomain_length: 63, max_subdomain_jitter: 42)
+          def initialize(tag:, domain:, max_subdomain_length: 63)
             @l = SingLogger.instance()
             @tag = tag == '' ? nil : tag
             @domain = domain == '' ? nil : domain
@@ -39,31 +35,7 @@ module Dnscat2
               raise(DnscatException, "max_subdomain_length is not sane")
             end
             @max_subdomain_length = max_subdomain_length
-
-            if(max_subdomain_jitter < 0 || max_subdomain_length - max_subdomain_jitter < 0)
-              raise(DnscatException, "max_subdomain_jitter is not sane")
-            end
-            @max_subdomain_jitter = max_subdomain_jitter
           end
-
-#          private
-#          def _find_max(sub_length:, available:)
-#            # The math behind this is:
-#            # total_length = sub_length * n + (n - 1)
-#            # length must be < = available
-#            #
-#            # TODO: This is an ugly bruteforce solution - find some pretty math
-#            # that matches
-#            256.step(1, -1) do |i|
-#              total_length = (sub_length * i) + (i - 1)
-#
-#              if(total_length <= MAX_RR_LENGTH)
-#                return i
-#              end
-#            end
-#
-#            raise(DnscatException, "Couldn't find a work-able length for DNS parameters")
-#          end
 
           private
           def _number_of_periods(sub_length:, available:, extra:)
@@ -93,8 +65,7 @@ module Dnscat2
               max_total_length = max_total_length - @domain.length - 1
             end
 
-            number_of_periods = _number_of_periods(sub_length: @max_subdomain_length - @max_subdomain_jitter, available: MAX_RR_LENGTH, extra: @tag || @domain)
-            #number_of_periods_2 = _find_max(sub_length: @max_subdomain_length - @max_subdomain_jitter, available: max_total_length)
+            number_of_periods = _number_of_periods(sub_length: @max_subdomain_length, available: MAX_RR_LENGTH, extra: @tag || @domain)
 
             return (max_total_length - number_of_periods) / 2
           end
@@ -108,17 +79,6 @@ module Dnscat2
           def encode_name(data:)
             @l.debug("TunnelDrivers::DNS::NameHelper Encoding #{data.length} bytes of data")
 
-#            name = []
-#            data = data.unpack('H*').pop()
-#            while(data && data.length >= @max_subdomain_length)
-#              length = @max_subdomain_length #::Kernel::rand((@max_subdomain_length - @max_subdomain_jitter)..@max_subdomain_length)
-#              sub, data = data[0..(length - 1)], data[length..-1]
-#              name << sub
-#            end
-#            # Add the last of the data
-#            name << data
-#
-#            name = name.join('.')
             name = data.unpack("H*").pop.chars.each_slice(63).map(&:join).join(".")
 
             # Add the @tag or @domain
@@ -128,8 +88,6 @@ module Dnscat2
             if(@domain)
               name = "#{name}.#{@domain}"
             end
-
-            puts(name)
 
             # Always double check that we aren't too big for a DNS packet
             if(name.length > MAX_RR_LENGTH)
