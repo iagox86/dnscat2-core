@@ -14,19 +14,26 @@ require 'thread'
 require 'dnscat2/core/dnscat_exception'
 
 require 'dnscat2/core/tunnel_drivers/dns/driver_dns_constants'
+require 'dnscat2/core/tunnel_drivers/encoders/base32'
+require 'dnscat2/core/tunnel_drivers/encoders/hex'
 
 module Dnscat2
   module Core
     module TunnelDrivers
       module DNS
         class NameHelper
+          ENCODERS = [
+            Encoders::Hex,
+            Encoders::Base32,
+          ]
+
           ##
           # tag: The text that goes in front of the name
           # domain: The text that goes after the name
           # max_subdomain_length: The maximum length of a sub-domain name (like
           #  the 'www' of 'www.google.com') - 63 is a safe bet
           public
-          def initialize(tag:, domain:, max_subdomain_length: 63)
+          def initialize(tag:, domain:, max_subdomain_length: 63, encoder: Encoders::Hex)
             @l = SingLogger.instance()
             @tag = tag == '' ? nil : tag
             @domain = domain == '' ? nil : domain
@@ -35,6 +42,11 @@ module Dnscat2
               raise(DnscatException, "max_subdomain_length is not sane")
             end
             @max_subdomain_length = max_subdomain_length
+
+            if(ENCODERS.index(encoder).nil?)
+              raise(DnscatException, "Invalid encoder: #{encoder}")
+            end
+            @encoder = encoder
           end
 
           private
@@ -67,7 +79,7 @@ module Dnscat2
 
             number_of_periods = _number_of_periods(sub_length: @max_subdomain_length, available: MAX_RR_LENGTH, extra: @tag || @domain)
 
-            return (max_total_length - number_of_periods) / 2
+            return ((max_total_length - number_of_periods) / @encoder::RATIO).floor
           end
 
           ##
@@ -79,7 +91,7 @@ module Dnscat2
           def encode_name(data:)
             @l.debug("TunnelDrivers::DNS::NameHelper Encoding #{data.length} bytes of data")
 
-            name = data.unpack("H*").pop.chars.each_slice(@max_subdomain_length).map(&:join).join(".")
+            name = @encoder.encode(data: data).chars.each_slice(@max_subdomain_length).map(&:join).join(".")
 
             # Add the @tag or @domain
             if(@tag)

@@ -47,11 +47,9 @@ module Dnscat2
             e = assert_raises(DnscatException) do
               Base32.decode(data: '!')
             end
-            puts e
             e = assert_raises(DnscatException) do
               Base32.decode(data: 'aa=aa')
             end
-            puts e
           end
         end
       end

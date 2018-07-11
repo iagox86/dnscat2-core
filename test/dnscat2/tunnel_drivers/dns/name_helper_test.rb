@@ -2,6 +2,8 @@
 require 'test_helper'
 
 require 'dnscat2/core/dnscat_exception'
+require 'dnscat2/core/tunnel_drivers/encoders/base32'
+require 'dnscat2/core/tunnel_drivers/encoders/hex'
 
 require 'dnscat2/core/tunnel_drivers/dns/name_helper'
 
@@ -59,20 +61,33 @@ module Dnscat2
           def test_encode()
             tests = [
               # Pretty normal test
-              { tag: nil,   domain: nil,   data: 'AAAA', expected: '41414141',        max_subdomain_length: 63 },
+              { tag: nil,   domain: nil,   data: 'AAAA', expected: '41414141',        max_subdomain_length: 63, encoder: Encoders::Hex },
 
               # Subdomain length of 1
-              { tag: nil,   domain: nil,   data: 'AAAA', expected: '4.1.4.1.4.1.4.1', max_subdomain_length: 1 },
+              { tag: nil,   domain: nil,   data: 'AAAA', expected: '4.1.4.1.4.1.4.1', max_subdomain_length: 1, encoder: Encoders::Hex },
 
               # Add a tag
-              { tag: 'abc', domain: nil,   data: 'AAAA', expected: 'abc.41414141',    max_subdomain_length: 63 },
+              { tag: 'abc', domain: nil,   data: 'AAAA', expected: 'abc.41414141',    max_subdomain_length: 63, encoder: Encoders::Hex },
 
               # Add a domain
-              { tag: nil,   domain: 'abc', data: 'AAAA', expected: '41414141.abc',    max_subdomain_length: 63 },
+              { tag: nil,   domain: 'abc', data: 'AAAA', expected: '41414141.abc',    max_subdomain_length: 63, encoder: Encoders::Hex },
+
+              # Same tests, in Base32
+              { tag: nil,   domain: nil,   data: 'AAAA', expected: 'ifaucqi',         max_subdomain_length: 63, encoder: Encoders::Base32 },
+
+              # Subdomain length of 1
+              { tag: nil,   domain: nil,   data: 'AAAA', expected: 'i.f.a.u.c.q.i',   max_subdomain_length: 1, encoder: Encoders::Base32 },
+
+              # Add a tag
+              { tag: 'abc', domain: nil,   data: 'AAAA', expected: 'abc.ifaucqi',     max_subdomain_length: 63, encoder: Encoders::Base32 },
+
+              # Add a domain
+              { tag: nil,   domain: 'abc', data: 'AAAA', expected: 'ifaucqi.abc',     max_subdomain_length: 63, encoder: Encoders::Base32 },
+
             ]
 
             tests.each do |t|
-              helper = NameHelper.new(tag: t[:tag], domain: t[:domain], max_subdomain_length: t[:max_subdomain_length])
+              helper = NameHelper.new(tag: t[:tag], domain: t[:domain], max_subdomain_length: t[:max_subdomain_length], encoder: t[:encoder])
               name = helper.encode_name(data: t[:data])
               assert_equal(t[:expected], name)
             end
@@ -82,7 +97,12 @@ module Dnscat2
             # This will mostly fail on its own if it creates a message that's too long
             1.upto(63) do |subdomain_length|
               0.upto(254) do |domain_length|
+                # Hex
                 n = NameHelper.new(tag: nil, domain: 'A' * domain_length, max_subdomain_length: subdomain_length)
+                assert_not_nil(n.encode_name(data: ('a' * n.max_length)))
+
+                # Base32
+                n = NameHelper.new(tag: nil, domain: 'A' * domain_length, max_subdomain_length: subdomain_length, encoder: Encoders::Base32)
                 assert_not_nil(n.encode_name(data: ('a' * n.max_length)))
               end
             end
