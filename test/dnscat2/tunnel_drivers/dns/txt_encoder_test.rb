@@ -2,6 +2,7 @@
 require 'test_helper'
 
 require 'dnscat2/core/dnscat_exception'
+require 'dnscat2/core/tunnel_drivers/encoders/base32'
 
 require 'dnscat2/core/tunnel_drivers/dns/txt_encoder'
 
@@ -37,6 +38,13 @@ module Dnscat2
             end
 
             assert_not_nil(e.message =~ /too much data/)
+          end
+
+          def test_encode_base32()
+            encoder = TXTEncoder.new(tag: 'abc', domain: nil, encoder: Encoders::Base32)
+            rr = encoder.encode(data: 'AaAaAaAa')
+
+            assert_equal('ifqucykbmfawc', rr.data)
           end
         end
       end
