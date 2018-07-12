@@ -32,8 +32,13 @@ module Dnscat2
           # domain: The text that goes after the name
           # max_subdomain_length: The maximum length of a sub-domain name (like
           #  the 'www' of 'www.google.com') - 63 is a safe bet
+          # encoder: An encoder that implements encode() and decode() functions
+          #  (probably from the encoders/ folder)
+          # extra_bytes: Extra bytes that need to be reserved as part of the
+          #  record (for example, MX packets need 2 extra bytes for the
+          #  `preference` field).
           public
-          def initialize(tag:, domain:, max_subdomain_length: 63, encoder: Encoders::Hex)
+          def initialize(tag:, domain:, max_subdomain_length: 63, encoder: Encoders::Hex, extra_bytes:0)
             @l = SingLogger.instance()
             @tag = tag == '' ? nil : tag
             @domain = domain == '' ? nil : domain
@@ -83,13 +88,17 @@ module Dnscat2
           end
 
           ##
-          # Gets a string of data, no longer than max_length().
+          # data: The data to encode; no more than `max_length()` bytes may be passed
           #
           # Returns a resource record of the correct type.
           ##
           public
-          def encode_name(data:)
+          def encode_name(data:, extra_bytes:0)
             @l.debug("TunnelDrivers::DNS::NameHelper Encoding #{data.length} bytes of data")
+
+            if(data.length > max_length())
+              raise(DnscatException, "Tried to encode too much data")
+            end
 
             name = @encoder.encode(data: data).chars.each_slice(@max_subdomain_length).map(&:join).join(".")
 
