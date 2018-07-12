@@ -14,14 +14,14 @@ require 'thread'
 require 'dnscat2/core/dnscat_exception'
 
 require 'dnscat2/core/tunnel_drivers/dns/driver_dns_constants'
+require 'dnscat2/core/tunnel_drivers/dns/encoder_helper'
 
 module Dnscat2
   module Core
     module TunnelDrivers
       module DNS
         class TXTEncoder
-          APPEND_DOMAIN = false # TODO: Remove
-          MAX_LENGTH = 254 # TODO: Remove
+          include EncoderHelper
 
           public
           def initialize(tag:, domain:)
@@ -36,7 +36,8 @@ module Dnscat2
           ##
           public
           def max_length()
-            return (254 / 2)
+            # -3 for the length prefixes (two bytes, then one byte)
+            return (MAX_RR_LENGTH - 3) / 2
           end
 
           ##
@@ -56,11 +57,9 @@ module Dnscat2
             data = data.unpack("H*").pop
 
             # Always double check that we aren't too big for a DNS packet
-            if(data.length > 254)
-              raise(DnscatException, "Tried to encode a name that's too long for the protocol")
-            end
-
-            return Nesser::TXT.new(data: data)
+            rr = Nesser::TXT.new(data: data)
+            double_check_length(rr: rr)
+            return rr
           end
         end
       end

@@ -17,7 +17,7 @@ module Dnscat2
           def test_max_length()
             # This is trivial, since the TXTEncoder always has room for 254
             # bytes (halved because of encoding)
-            assert_equal(127, @encoder.max_length)
+            assert_equal(126, @encoder.max_length)
           end
 
           def test_encode_blank()
@@ -26,14 +26,14 @@ module Dnscat2
             assert_equal('', rr.data)
           end
 
-          def test_encode_127_bytes()
-            rr = @encoder.encode(data: 'A' * 127)
-            assert_equal('41' * 127, rr.data)
+          def test_encode_max_bytes()
+            rr = @encoder.encode(data: 'A' * @encoder.max_length())
+            assert_equal('41' * @encoder.max_length, rr.data)
           end
 
           def test_encode_128_bytes()
             e = assert_raises(DnscatException) do
-              @encoder.encode(data: 'A' * 128)
+              @encoder.encode(data: 'A' * (@encoder.max_length() + 1))
             end
 
             assert_not_nil(e.message =~ /too much data/)
