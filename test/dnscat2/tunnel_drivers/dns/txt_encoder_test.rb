@@ -18,7 +18,7 @@ module Dnscat2
           def test_max_length()
             # This is trivial, since the TXTEncoder always has room for 254
             # bytes (halved because of encoding)
-            assert_equal(126, @encoder.max_length)
+            assert_equal(125, @encoder.max_length)
           end
 
           def test_encode_blank()

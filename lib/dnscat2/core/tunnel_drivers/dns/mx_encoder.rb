@@ -14,6 +14,7 @@ require 'thread'
 require 'dnscat2/core/dnscat_exception'
 
 require 'dnscat2/core/tunnel_drivers/dns/driver_dns_constants'
+require 'dnscat2/core/tunnel_drivers/dns/encoder_helper'
 require 'dnscat2/core/tunnel_drivers/dns/name_helper'
 
 module Dnscat2
@@ -21,12 +22,12 @@ module Dnscat2
     module TunnelDrivers
       module DNS
         class MXEncoder < NameHelper
-          # The 'preference' field of the MX packet takes up 2 bytes
-          EXTRA_BYTES = 2
+          include EncoderHelper
 
           public
           def initialize(tag:, domain:, max_subdomain_length: 63, encoder: Encoders::Hex)
-            super(tag:tag, domain:domain, max_subdomain_length: max_subdomain_length, encoder: encoder, extra_bytes: EXTRA_BYTES)
+            # CNAME has 4 extra bytes: the 4-byte length field
+            super(tag:tag, domain:domain, max_subdomain_length: max_subdomain_length, encoder: encoder, extra_bytes: 4)
 
             @l = SingLogger.instance()
           end
@@ -43,7 +44,9 @@ module Dnscat2
             name = encode_name(data: data)
 
             # Create the RR with a random preference
-            return Nesser::MX.new(name: name, preference: [10, 20, 30, 40, 50].sample)
+            rr = Nesser::MX.new(name: name, preference: [10, 20, 30, 40, 50].sample)
+            double_check_length(rr: rr)
+            return rr
           end
         end
       end

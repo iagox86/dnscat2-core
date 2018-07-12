@@ -38,10 +38,17 @@ module Dnscat2
           #  record (for example, MX packets need 2 extra bytes for the
           #  `preference` field).
           public
-          def initialize(tag:, domain:, max_subdomain_length: 63, encoder: Encoders::Hex, extra_bytes:0)
+          def initialize(tag:, domain:, max_subdomain_length: 63, encoder: Encoders::Hex, extra_bytes:)
             @l = SingLogger.instance()
             @tag = tag == '' ? nil : tag
             @domain = domain == '' ? nil : domain
+
+            if(!tag.nil? && (tag.length > 252))
+              raise(DnscatException, "tag length is not sane")
+            end
+            if(!domain.nil? && (domain.length > 252))
+              raise(DnscatException, "domain length is not sane")
+            end
 
             if(max_subdomain_length < 1 || max_subdomain_length > 63)
               raise(DnscatException, "max_subdomain_length is not sane")
@@ -52,20 +59,15 @@ module Dnscat2
               raise(DnscatException, "Invalid encoder: #{encoder}")
             end
             @encoder = encoder
+
+            @extra_bytes = extra_bytes
           end
 
           private
-          def _number_of_periods(sub_length:, available:, extra:)
-            if(extra.nil?)
-              # If there's no extra, we have one "extra" space, because no
-              # period before the "first" subdomain
-              return (available + 1) / (sub_length + 1)
-            else
-              # If there's an extra, we need to subtract it from the available
-              # bytes, as well as its period
-              return ((available - extra.length - 1) / (sub_length + 1))
-            end
-            # We add 1 to each sub_length to account for its period
+          def _number_of_segments(sub_length:, available:)
+            # Each subdomain is actually one byte longer, because of the length
+            # prefix. Round up because we can't have a partial byte.
+            return (available.to_f / (sub_length + 1)).ceil
           end
 
           ##
@@ -74,7 +76,16 @@ module Dnscat2
           ##
           public
           def max_length()
+            # Start with the max resource record length
             max_total_length = MAX_RR_LENGTH
+
+            # Remove the 'extra' bytes (ie, the length, preference, etc fields)
+            max_total_length -= @extra_bytes
+
+            # Remove the final NUL terminator
+            max_total_length -= 1
+
+            # Remove the length of the tag and/or domain from the packet (including their periods)
             if(@tag)
               max_total_length = max_total_length - @tag.length - 1
             end
@@ -82,9 +93,11 @@ module Dnscat2
               max_total_length = max_total_length - @domain.length - 1
             end
 
-            number_of_periods = _number_of_periods(sub_length: @max_subdomain_length, available: MAX_RR_LENGTH, extra: @tag || @domain)
+            # Use this number to calculate the number of periods
+            max_total_length -= _number_of_segments(sub_length: @max_subdomain_length, available: max_total_length)
 
-            return ((max_total_length - number_of_periods) / @encoder::RATIO).floor
+            # Reduce it to the ratio of data that our encoder gives us
+            return (max_total_length / @encoder::RATIO).floor
           end
 
           ##
@@ -93,7 +106,7 @@ module Dnscat2
           # Returns a resource record of the correct type.
           ##
           public
-          def encode_name(data:, extra_bytes:0)
+          def encode_name(data:)
             @l.debug("TunnelDrivers::DNS::NameHelper Encoding #{data.length} bytes of data")
 
             if(data.length > max_length())

@@ -11,7 +11,7 @@ module Dnscat2
   module Core
     module TunnelDrivers
       module DNS
-        MAX_RR_LENGTH = 255
+        MAX_RR_LENGTH = 253
 
         MAX_A_RECORDS = 64
         MAX_AAAA_RECORDS = 16
