@@ -1,6 +1,6 @@
 # Encoding: ASCII-8BIT
 ##
-# txt_handler.rb
+# txt_encoder.rb
 # Created March, 2013
 # By Ron Bowes
 #
@@ -19,7 +19,7 @@ module Dnscat2
   module Core
     module TunnelDrivers
       module DNS
-        class TXTHandler
+        class TXTEncoder
           APPEND_DOMAIN = false # TODO: Remove
           MAX_LENGTH = 254 # TODO: Remove
 
@@ -46,7 +46,7 @@ module Dnscat2
           ##
           public
           def encode(data:)
-            @l.debug("TunnelDrivers::DNS::TXTHandler Encoding #{data.length} bytes of data")
+            @l.debug("TunnelDrivers::DNS::TXTEncoder Encoding #{data.length} bytes of data")
             if(data.length > max_length)
               raise(DnscatException, "Tried to encode too much data!")
             end

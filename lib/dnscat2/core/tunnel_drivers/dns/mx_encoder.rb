@@ -1,6 +1,6 @@
 # Encoding: ASCII-8BIT
 ##
-# mx_handler.rb
+# mx_encoder.rb
 # Created March, 2013
 # By Ron Bowes
 #
@@ -20,7 +20,7 @@ module Dnscat2
   module Core
     module TunnelDrivers
       module DNS
-        class MXHandler < NameHelper
+        class MXEncoder < NameHelper
           # The 'preference' field of the MX packet takes up 2 bytes
           EXTRA_BYTES = 2
 
@@ -38,7 +38,7 @@ module Dnscat2
           ##
           public
           def encode(data:)
-            @l.debug("TunnelDrivers::DNS::MXHandler Encoding #{data.length} bytes of data")
+            @l.debug("TunnelDrivers::DNS::MXEncoder Encoding #{data.length} bytes of data")
 
             name = encode_name(data: data)
 
