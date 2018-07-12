@@ -23,40 +23,40 @@ module Dnscat2
           def test_encode_some_bytes()
             rrs = @encoder.encode(data: "ABCDEFGHIJ")
             assert_equal(4, rrs.length)
-            assert_equal("1.10.65.66",  rrs[0].address.to_s)
-            assert_equal("2.67.68.69",  rrs[1].address.to_s)
-            assert_equal("3.70.71.72",  rrs[2].address.to_s)
-            assert_equal("4.73.74.255", rrs[3].address.to_s)
+            assert_equal("0.10.65.66",  rrs[0].address.to_s)
+            assert_equal("1.67.68.69",  rrs[1].address.to_s)
+            assert_equal("2.70.71.72",  rrs[2].address.to_s)
+            assert_equal("3.73.74.255", rrs[3].address.to_s)
           end
 
           def test_encode_one_byte()
             rrs = @encoder.encode(data: "A")
             assert_equal(1, rrs.length)
-            assert_equal("1.1.65.255", rrs[0].address.to_s)
+            assert_equal("0.1.65.255", rrs[0].address.to_s)
           end
 
           def test_encode_one_ip()
             rrs = @encoder.encode(data: "\x00\x00")
             assert_equal(1, rrs.length)
-            assert_equal("1.2.0.0", rrs[0].address.to_s)
+            assert_equal("0.2.0.0", rrs[0].address.to_s)
           end
 
           def test_encode_on_boundary()
             rrs = @encoder.encode(data: "ABCDEFGHIJK")
             assert_equal(4, rrs.length)
-            assert_equal("1.11.65.66", rrs[0].address.to_s)
-            assert_equal("2.67.68.69", rrs[1].address.to_s)
-            assert_equal("3.70.71.72", rrs[2].address.to_s)
-            assert_equal("4.73.74.75", rrs[3].address.to_s)
+            assert_equal("0.11.65.66", rrs[0].address.to_s)
+            assert_equal("1.67.68.69", rrs[1].address.to_s)
+            assert_equal("2.70.71.72", rrs[2].address.to_s)
+            assert_equal("3.73.74.75", rrs[3].address.to_s)
           end
 
           def test_encode_max_bytes()
             rrs = @encoder.encode(data: "A" * @encoder.max_length)
             assert_equal(63, rrs.length)
-            assert_equal("1.188.65.65", rrs[0].address.to_s)
+            assert_equal("0.188.65.65", rrs[0].address.to_s)
 
             1.upto(62) do |i|
-              assert_equal("#{i+1}.65.65.65", rrs[i].address.to_s)
+              assert_equal("#{i}.65.65.65", rrs[i].address.to_s)
             end
           end
 

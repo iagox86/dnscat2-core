@@ -66,9 +66,10 @@ module Dnscat2
             # each
             i = 0
             data = data.chars.each_slice(3).map(&:join).map do |ip|
-              ip = ip.ljust(3, "\xFF").bytes()
+              ip = [i] + ip.ljust(3, "\xFF").bytes()
+              i += 1
 
-              '%d.%d.%d.%d' % [i += 1, ip[0], ip[1], ip[2]]
+              '%d.%d.%d.%d' % [ip[0], ip[1], ip[2], ip[3]]
             end
 
             return data.map() do |ip|
