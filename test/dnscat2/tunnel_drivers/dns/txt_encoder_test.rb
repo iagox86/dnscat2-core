@@ -22,13 +22,13 @@ module Dnscat2
           end
 
           def test_encode_blank()
-            rr = @encoder.encode(data: '')
+            rr = @encoder.encode(data: '').pop()
 
             assert_equal('', rr.data)
           end
 
           def test_encode_max_bytes()
-            rr = @encoder.encode(data: 'A' * @encoder.max_length())
+            rr = @encoder.encode(data: 'A' * @encoder.max_length()).pop()
             assert_equal('41' * @encoder.max_length, rr.data)
           end
 
@@ -42,7 +42,7 @@ module Dnscat2
 
           def test_encode_base32()
             encoder = TXTEncoder.new(tag: 'abc', domain: nil, encoder: Encoders::Base32)
-            rr = encoder.encode(data: 'AaAaAaAa')
+            rr = encoder.encode(data: 'AaAaAaAa').pop()
 
             assert_equal('ifqucykbmfawc', rr.data)
           end

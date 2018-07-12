@@ -17,12 +17,14 @@ module Dnscat2
       module DNS
         module EncoderHelper
           public
-          def double_check_length(rr:)
-            packer = Nesser::Packer.new()
-            rr.pack(packer)
+          def double_check_length(rrs:)
+            rrs.each do |rr|
+              packer = Nesser::Packer.new()
+              rr.pack(packer)
 
-            if(packer.get().length > MAX_RR_LENGTH)
-              raise(DnscatException, "Tried to pack too much data into a name (packed #{packer.get().length} bytes, max is #{MAX_RR_LENGTH}! (This is an internal bug)")
+              if(packer.get().length > MAX_RR_LENGTH)
+                raise(DnscatException, "Tried to pack too much data into a name (packed #{packer.get().length} bytes, max is #{MAX_RR_LENGTH}! (This is an internal bug)")
+              end
             end
           end
         end

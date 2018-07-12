@@ -60,8 +60,8 @@ module Dnscat2
 
             # Always double check that we aren't too big for a DNS packet
             rr = Nesser::TXT.new(data: data)
-            double_check_length(rr: rr)
-            return rr
+            double_check_length(rrs: [rr])
+            return [rr]
           end
         end
       end

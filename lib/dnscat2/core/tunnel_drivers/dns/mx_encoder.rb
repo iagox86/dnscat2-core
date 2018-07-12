@@ -45,8 +45,8 @@ module Dnscat2
 
             # Create the RR with a random preference
             rr = Nesser::MX.new(name: name, preference: [10, 20, 30, 40, 50].sample)
-            double_check_length(rr: rr)
-            return rr
+            double_check_length(rrs: [rr])
+            return [rr]
           end
         end
       end

@@ -20,7 +20,7 @@ module Dnscat2
               encoder: Encoders::Hex,
             )
 
-            rr = encoder.encode(data: 'AAAA')
+            rr = encoder.encode(data: 'AAAA').pop()
 
             assert_equal('41414141', rr.name)
           end
@@ -33,7 +33,7 @@ module Dnscat2
               encoder: Encoders::Hex,
             )
 
-            rr = encoder.encode(data: 'AAAA')
+            rr = encoder.encode(data: 'AAAA').pop()
 
             assert_equal('aaa.41414141', rr.name)
           end
@@ -46,7 +46,7 @@ module Dnscat2
               encoder: Encoders::Hex,
             )
 
-            rr = encoder.encode(data: 'AAAA')
+            rr = encoder.encode(data: 'AAAA').pop()
 
             assert_equal('41414141.aaa', rr.name)
           end
@@ -59,7 +59,7 @@ module Dnscat2
               encoder: Encoders::Hex,
             )
 
-            rr = encoder.encode(data: 'AAAA')
+            rr = encoder.encode(data: 'AAAA').pop()
 
             assert_equal('414.141.41', rr.name)
           end
@@ -72,7 +72,7 @@ module Dnscat2
               encoder: Encoders::Base32,
             )
 
-            rr = encoder.encode(data: 'AAAA')
+            rr = encoder.encode(data: 'AAAA').pop()
 
             assert_equal('ifaucqi', rr.name)
           end
@@ -85,7 +85,7 @@ module Dnscat2
               encoder: Encoders::Hex,
             )
 
-            rr = encoder.encode(data: 'A' * encoder.max_length())
+            rr = encoder.encode(data: 'A' * encoder.max_length()).pop()
             assert_not_nil(rr)
             assert_not_nil(rr.name)
           end
@@ -99,7 +99,7 @@ module Dnscat2
             )
 
             assert_raises(DnscatException) do
-              encoder.encode(data: 'A' * (encoder.max_length() + 1))
+              encoder.encode(data: 'A' * (encoder.max_length() + 1)).pop()
             end
           end
 
@@ -111,7 +111,7 @@ module Dnscat2
               encoder: Encoders::Hex,
             )
 
-            rr = encoder.encode(data: 'A' * encoder.max_length())
+            rr = encoder.encode(data: 'A' * encoder.max_length()).pop()
             assert_not_nil(rr)
             assert_not_nil(rr.name)
           end

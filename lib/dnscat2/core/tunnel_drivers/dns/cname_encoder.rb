@@ -45,8 +45,8 @@ module Dnscat2
 
             # Create the RR
             rr = Nesser::CNAME.new(name: name)
-            double_check_length(rr: rr)
-            return rr
+            double_check_length(rrs: [rr])
+            return [rr]
           end
         end
       end
