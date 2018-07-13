@@ -25,68 +25,26 @@ require 'thread'
 require 'dnscat2/core/dnscat_exception'
 
 require 'dnscat2/core/tunnel_drivers/dns/driver_dns_constants'
-require 'dnscat2/core/tunnel_drivers/dns/txt_handler'
+
+require 'dnscat2/core/tunnel_drivers/dns/a_encoder'
+require 'dnscat2/core/tunnel_drivers/dns/aaaa_encoder'
+require 'dnscat2/core/tunnel_drivers/dns/cname_encoder'
+require 'dnscat2/core/tunnel_drivers/dns/mx_encoder'
+require 'dnscat2/core/tunnel_drivers/dns/ns_encoder'
+require 'dnscat2/core/tunnel_drivers/dns/txt_encoder'
 
 module Dnscat2
   module Core
     module TunnelDrivers
       module DNS
         class Driver
-          TYPES = {
-            ::Nesser::TYPE_CNAME => {
-              :append_domain   => true,
-              :max_length      => 63*4 / 2, # Divide by two because we need to encode it
-              :encoder         => Proc.new() do |name|
-                 name.unpack("H*").pop.chars.each_slice(63).map(&:join).join(".")
-              end,
-              :create_rr       => Proc.new() do |data|
-              end,
-            },
-            ::Nesser::TYPE_A => {
-              :append_domain   => false,
-              :max_length      => (MAX_A_RECORDS * (4-1)) - 1, # Length-prefixed and sequenced
-
-              # Encode in length-prefixed dotted-decimal notation
-              :encoder         => Proc.new() do |name|
-                # Starting sequence number
-                i = -1
-
-                # Prepend the length to the name, and break it into groups of three characters
-                (name.length.chr + name).chars.each_slice(3).map(&:join).map do |ip|
-                  # Make sure ip is exactly three characters
-                  ip = ip.ljust(3, "A")
-                  i += 1
-                  "%d.%d.%d.%d" % ([i] + ip.bytes.to_a) # Return
-                end
-              end,
-              :create_rr       => Proc.new() do |data|
-              end,
-            },
-            ::Nesser::TYPE_AAAA => {
-              :append_domain   => false,
-              :max_length      => (MAX_AAAA_RECORDS * (16-1)) - 1, # Length-prefixed and sequenced
-
-              # Encode in length-prefixed IPv6 notation
-              :encoder         => Proc.new() do |name|
-                # Starting sequence number
-                i = -1
-
-                # Prepend the length to the string and split it into 15-character blocks
-                (name.length.chr + name).chars.each_slice(15).map(&:join).map do |ip|
-                  # Make sure the ip is exactly 15 characters
-                  ip = ip.ljust(15, "A")
-                  i += 1
-
-                  # Prepend the sequence number to the 15 bytes, break that into
-                  # 2-byte blocks, and encode them in hex
-                  ([i] + ip.bytes.to_a).each_slice(2).map do |octet|
-                    "%04x" % [octet[0] << 8 | octet[1]]
-                  end.join(":") # return
-                end
-              end,
-              :create_rr       => Proc.new() do |data|
-              end,
-            },
+          ENCODERS = {
+            ::Nesser::TYPE_A     => AEncoder,
+            ::Nesser::TYPE_AAAA  => AAAAEncoder,
+            ::Nesser::TYPE_CNAME => CNAMEEncoder,
+            ::Nesser::TYPE_MX    => MXEncoder,
+            ::Nesser::TYPE_NS    => NSEncoder,
+            ::Nesser::TYPE_TXT   => TXTEncoder,
           }
 
           ##
